@@ -9,9 +9,12 @@ def render_role_dashboard():
     role = user.get("role", "L1")
     role_display = user.get("role_display", "L1 SOC Analyst")
 
-    st.markdown(f"## 📊 {role_display} Dashboard")
-    st.caption(f"Authenticated as: `{user.get('name')}` ({user.get('email')}) | Department: `{user.get('department')}`")
-    st.markdown("---")
+    st.markdown(
+        f'''<section class="dashboard-hero"><div><span>SECURITY POSTURE / {role.upper()}</span>
+        <h1>{role_display}</h1><p>{user.get('name')} · {user.get('department', 'Security Operations')}</p></div>
+        <div class="hero-status"><i></i> LIVE TELEMETRY</div></section>''',
+        unsafe_allow_html=True,
+    )
 
     alerts = client.get_alerts()
     incidents = client.get_incidents()
@@ -32,7 +35,7 @@ def render_role_dashboard():
         _render_l1_dashboard(alerts, endpoints)
 
 def _render_l1_dashboard(alerts, endpoints):
-    st.markdown("### 🚨 SIEM Alert Queue & Triage Tasks")
+    st.markdown("### SIEM alert queue & triage")
     col1, col2, col3 = st.columns(3)
     with col1:
         st.metric("Assigned Open Alerts", len(alerts))
@@ -41,12 +44,12 @@ def _render_l1_dashboard(alerts, endpoints):
     with col3:
         st.metric("Endpoints Monitored", len(endpoints))
 
-    st.markdown("#### Active SIEM Alert Queue")
+    st.markdown("#### Active queue")
     for a in alerts[:5]:
         st.markdown(f"- **[{a.get('severity')}] {a.get('alert_id')}**: `{a.get('title')}` (User: `{a.get('user_email')}` | Host: `{a.get('hostname')}`)")
 
 def _render_l2_dashboard(alerts, incidents, endpoints, users):
-    st.markdown("### 🕵️ Threat Hunting & Event Correlation Overview")
+    st.markdown("### Threat hunting & correlation")
     col1, col2, col3 = st.columns(3)
     with col1:
         st.metric("Active Campaigns", "2 Correlated")
@@ -55,13 +58,13 @@ def _render_l2_dashboard(alerts, incidents, endpoints, users):
     with col3:
         st.metric("Compromised Endpoints", sum(1 for ep in endpoints if ep.get("health_status") == "COMPROMISED"))
 
-    st.markdown("#### High-Risk Target Entities")
+    st.markdown("#### High-risk entities")
     for u in users:
         if u.get("risk_score", 0) > 70:
             st.warning(f"👤 **{u.get('name')}** (`{u.get('email')}`) | Risk Score: **{u.get('risk_score')}/100** | Status: `{u.get('account_status')}`")
 
 def _render_manager_dashboard(alerts, incidents, endpoints):
-    st.markdown("### 👮 Incident Response & Containment Command Center")
+    st.markdown("### Incident response command")
     col1, col2, col3 = st.columns(3)
     with col1:
         st.metric("Active Incident Tickets", len(incidents))
@@ -70,12 +73,12 @@ def _render_manager_dashboard(alerts, incidents, endpoints):
     with col3:
         st.metric("Host Containment Rules", "1 Active Rule")
 
-    st.markdown("#### Incident Escalation Queue")
+    st.markdown("#### Escalation queue")
     for inc in incidents:
         st.markdown(f"🚨 **Incident Ticket {inc.get('incident_id')}**: `{inc.get('title')}` | Severity: **`{inc.get('severity')}`** | Affected Host: `{inc.get('affected_host')}`")
 
 def _render_ciso_dashboard(alerts, incidents):
-    st.markdown("### 🛡️ Enterprise Security Posture & Executive Risk Overview")
+    st.markdown("### Enterprise security posture")
     col1, col2, col3 = st.columns(3)
     with col1:
         st.metric("Overall Security Posture", "ELEVATED RISK", delta="Requires Response", delta_color="inverse")
@@ -84,11 +87,11 @@ def _render_ciso_dashboard(alerts, incidents):
     with col3:
         st.metric("Mean Time to Contain (MTTC)", "14.2 Minutes")
 
-    st.markdown("#### CISO Executive Threat Campaign Brief")
+    st.markdown("#### Executive threat brief")
     st.info("📊 **Campaign Threat Brief**: Active multi-stage LockBit Ransomware & Cobalt Strike C2 campaign detected targeting Sales and Finance endpoints (`WS-FINANCE-04`). Host network isolation initiated.")
 
 def _render_admin_dashboard():
-    st.markdown("### ⚙️ System Administration & User Role Governance")
+    st.markdown("### System administration & role governance")
     st.markdown("User Role Configuration & Permissions Matrix:")
     st.json({
         "analyst_l1": "L1 SOC Analyst (View Alerts, Users, Endpoints)",

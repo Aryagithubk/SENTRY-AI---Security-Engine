@@ -4,6 +4,7 @@ from frontend.styles import MAIN_CSS
 from frontend.login import render_login_page
 from frontend.sidebar import render_sidebar
 from frontend.chat import render_chat_messages, render_hitl_dialog
+from frontend.execution_visualizer import render_bot, render_execution_console
 from frontend.workspace import render_investigation_workspace
 from frontend.dashboards import render_role_dashboard
 from frontend.audit_view import render_audit_view
@@ -107,6 +108,9 @@ def run_main_ui():
         return
 
     render_sidebar()
+    # The bot docks itself to the viewport; this call creates no header chrome.
+    render_bot()
+    sidebar_live_panel = st.sidebar.empty()
     render_header()
 
     nav_choice = st.session_state.get("nav_choice", "💬 Copilot Chat")
@@ -149,15 +153,27 @@ def run_main_ui():
         provider = st.session_state.get("llm_provider", "ollama")
         graph = SecureOpsGraph(provider=provider)
         
+        live_events = []
+
+        def show_live_event(event):
+            live_events.append(event)
+            render_execution_console(sidebar_live_panel, live_events)
+
         with st.status("🧠 **SENTRY AI Thinking...** Executing authorized security action...", expanded=True) as status:
             status.write("⚙️ Initializing authorized incident ticket parameters...")
             time.sleep(0.3)
             approved_query = st.session_state.pop("hitl_query", "create security incident")
-            res = graph.process_query(approved_query, auth_context=user_auth, hitl_approved=True,
-                                      conversation_history=st.session_state.get("messages", []))
+            res = graph.process_query(
+                approved_query,
+                auth_context=user_auth,
+                hitl_approved=True,
+                conversation_history=st.session_state.get("messages", []),
+                on_event=show_live_event,
+            )
             status.write("✅ Incident creation confirmed in Incident Management System.")
             time.sleep(0.3)
             status.update(label="✅ **Execution Completed**", state="complete", expanded=False)
+        render_execution_console(sidebar_live_panel, live_events, complete=True)
 
         append_persistent_message({
             "role": "assistant",
@@ -188,14 +204,24 @@ def run_main_ui():
         provider = st.session_state.get("llm_provider", "ollama")
         graph = SecureOpsGraph(provider=provider)
 
+        live_events = []
+
+        def show_live_event(event):
+            live_events.append(event)
+            render_execution_console(sidebar_live_panel, live_events)
+
         # AI Thinking & Reasoning Status Expander
         with st.status("🧠 **SENTRY AI Thinking & Reasoning...**", expanded=True) as status:
             status.write(f"🔍 **Stage 1**: Supervisor Agent evaluating query intent for role `{user_auth['role']}`...")
             time.sleep(0.35)
             status.write("🛠️ **Stage 2**: Invoking specialized worker agents & querying SIEM/EDR telemetry...")
             
-            result = graph.process_query(user_input, auth_context=user_auth,
-                                         conversation_history=st.session_state.get("messages", []))
+            result = graph.process_query(
+                user_input,
+                auth_context=user_auth,
+                conversation_history=st.session_state.get("messages", []),
+                on_event=show_live_event,
+            )
             time.sleep(0.35)
 
             if result.get("status") == "HITL_REQUIRED":
@@ -205,6 +231,8 @@ def run_main_ui():
                 status.write("📊 **Stage 4**: Synthesizing multi-source root cause analysis & compliance audit entry...")
                 time.sleep(0.35)
                 status.update(label="✅ **Multi-Agent Threat Synthesis Completed**", state="complete", expanded=False)
+
+        render_execution_console(sidebar_live_panel, live_events, complete=result.get("status") != "HITL_REQUIRED")
 
         # Append Assistant Response
         append_persistent_message({
