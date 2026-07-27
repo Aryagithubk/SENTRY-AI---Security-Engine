@@ -1,6 +1,7 @@
 import streamlit as st
 from backend.services.auth_service import AuthService
 from backend.services.audit_service import AuditService
+from backend.services.db_service import DatabaseService
 
 ROLE_MAP = {
     "L1 SOC Analyst": "L1",
@@ -61,8 +62,11 @@ def render_login_page():
                 )
                 
                 if user:
+                    session_id = DatabaseService.create_app_session(user)
                     st.session_state["authenticated"] = True
                     st.session_state["user"] = user
+                    st.session_state["app_session_id"] = session_id
+                    st.query_params["session"] = session_id
                     AuditService.log_event(
                         user_id=user["username"],
                         user_role=user["role"],

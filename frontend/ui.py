@@ -9,6 +9,7 @@ from frontend.dashboards import render_role_dashboard
 from frontend.audit_view import render_audit_view
 from backend.workflows.graph import SecureOpsGraph
 from backend.services.audit_service import AuditService
+from backend.services.db_service import DatabaseService
 
 def init_app():
     """Initialize page configuration and CSS theme."""
@@ -19,6 +20,25 @@ def init_app():
         initial_sidebar_state="expanded"
     )
     st.markdown(MAIN_CSS, unsafe_allow_html=True)
+
+def restore_persistent_session():
+    """Restore authenticated user and chat history after a browser reload."""
+    session_id = st.query_params.get("session")
+    if not session_id:
+        return
+    user = DatabaseService.get_app_session(session_id)
+    if user:
+        st.session_state["authenticated"] = True
+        st.session_state["user"] = user
+        st.session_state["app_session_id"] = session_id
+        if "messages" not in st.session_state:
+            st.session_state["messages"] = DatabaseService.get_conversation_messages(session_id)
+
+def append_persistent_message(message):
+    st.session_state.setdefault("messages", []).append(message)
+    session_id = st.session_state.get("app_session_id")
+    if session_id:
+        DatabaseService.append_conversation_message(session_id, message)
 
 def render_header():
     """Render top header with rotating glowing security shield, SENTRY identity, and Back to Login button."""
@@ -76,6 +96,7 @@ def render_header():
 
 def run_main_ui():
     init_app()
+    restore_persistent_session()
 
     # Check Authentication Guard
     if not st.session_state.get("authenticated"):

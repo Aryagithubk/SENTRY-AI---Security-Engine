@@ -16,7 +16,7 @@ SENTRY_IDENTITY = """I am **SENTRY** (*Security Engine for Next-generation Triag
 *How can I help protect your enterprise infrastructure today?*"""
 
 PROFANITY_PATTERNS = [
-    r"\b(fuck|bitch|bastard|asshole|shit|dick|pussy|cunt|gaali|bhenchod|madarchod|chutiya|gand|harami)\b"
+    r"\b(fuck|bitch|bastard|asshole|shit)\b"
 ]
 
 GREETING_PATTERNS = [

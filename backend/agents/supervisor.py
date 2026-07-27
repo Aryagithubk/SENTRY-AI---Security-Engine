@@ -1,10 +1,20 @@
-import json
-from typing import Dict, Any, Tuple, Optional
+from typing import Dict, Any, Literal, Tuple, Optional
+from pydantic import BaseModel
 from backend.prompts.supervisor_prompt import SUPERVISOR_PROMPT
 from backend.services.llm import get_llm
 from backend.utils.intent_classifier import AlgorithmicIntentClassifier
 from backend.utils.logger import log_stage
 from langchain_core.messages import SystemMessage, HumanMessage
+
+
+class RoutingDecision(BaseModel):
+    """Validated structured response returned by the supervisor LLM."""
+
+    agent: Literal[
+        "Conversational Agent", "Alert Agent", "Identity Agent", "Endpoint Agent",
+        "Incident Agent", "Reporting Agent", "Threat Correlation Agent",
+    ]
+    reason: str = "Routed based on query intent"
 
 class SupervisorAgent:
     """
@@ -48,16 +58,11 @@ class SupervisorAgent:
             response = llm.invoke(messages)
             content = response.content.strip()
 
-            # Parse JSON decision
-            data = json.loads(content)
-            agent = data.get("agent", "Conversational Agent")
-            valid_agents = {
-                "Conversational Agent", "Alert Agent", "Identity Agent", "Endpoint Agent",
-                "Incident Agent", "Reporting Agent", "Threat Correlation Agent",
-            }
-            if agent not in valid_agents:
-                raise ValueError(f"Unsupported supervisor route: {agent}")
-            reason = data.get("reason", "Routed based on query intent")
+            # This validates an LLM response; it is not application storage.
+            # Telemetry and incidents are read from SQLite via SOCApiClient.
+            decision = RoutingDecision.model_validate_json(content)
+            agent = decision.agent
+            reason = decision.reason
             log_stage("Supervisor LLM Routing", f"User Role: {user_role} | Query: '{query}' -> Routed to: '{agent}' ({reason})")
             return agent, reason
         except Exception:
