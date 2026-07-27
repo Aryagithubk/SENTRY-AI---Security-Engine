@@ -81,8 +81,11 @@ def render_header():
                 action="NAVIGATE_BACK_TO_LOGIN",
                 result="SUCCESS"
             )
-            st.session_state["authenticated"] = False
-            st.session_state.pop("user", None)
+            session_id = st.session_state.get("app_session_id")
+            if session_id:
+                DatabaseService.delete_app_session(session_id)
+            st.query_params.clear()
+            st.session_state.clear()
             st.rerun()
 
     st.markdown(
@@ -131,15 +134,17 @@ def run_main_ui():
         "role_display": user.get("role_display", "L1 SOC Analyst")
     }
 
-    # Check for preset query or text input
+    # Only one graph execution may run per browser session at a time.
+    processing = st.session_state.get("processing", False)
     user_input = None
-    if "preset_query" in st.session_state and st.session_state["preset_query"]:
+    if not processing and st.session_state.get("preset_query"):
         user_input = st.session_state.pop("preset_query")
     else:
-        user_input = st.chat_input("Ask SENTRY AI a security query, user email, host IP, or command...")
+        user_input = st.chat_input("Ask SENTRY AI a security query, user email, host IP, or command...", disabled=processing)
 
     # Process pending HITL approval execution
     if st.session_state.get("hitl_approved"):
+        st.session_state["processing"] = True
         st.session_state["hitl_approved"] = False
         provider = st.session_state.get("llm_provider", "ollama")
         graph = SecureOpsGraph(provider=provider)
@@ -148,22 +153,29 @@ def run_main_ui():
             status.write("⚙️ Initializing authorized incident ticket parameters...")
             time.sleep(0.3)
             approved_query = st.session_state.pop("hitl_query", "create security incident")
-            res = graph.process_query(approved_query, auth_context=user_auth, hitl_approved=True)
+            res = graph.process_query(approved_query, auth_context=user_auth, hitl_approved=True,
+                                      conversation_history=st.session_state.get("messages", []))
             status.write("✅ Incident creation confirmed in Incident Management System.")
             time.sleep(0.3)
             status.update(label="✅ **Execution Completed**", state="complete", expanded=False)
 
-        st.session_state["messages"].append({
+        append_persistent_message({
             "role": "assistant",
             "content": res.get("response", ""),
             "trace": res.get("execution_trace", [])
         })
+        st.session_state["processing"] = False
         st.rerun()
 
-    if user_input:
-        # Append User Message
-        st.session_state["messages"].append({"role": "user", "content": user_input})
-        
+    if user_input and not processing:
+        append_persistent_message({"role": "user", "content": user_input})
+        st.session_state["pending_query"] = user_input
+        st.session_state["processing"] = True
+        st.rerun()
+
+    pending_query = st.session_state.get("pending_query")
+    if pending_query:
+        user_input = pending_query
         # Log user query in compliance audit log
         AuditService.log_event(
             user_id=user_auth["username"],
@@ -182,7 +194,8 @@ def run_main_ui():
             time.sleep(0.35)
             status.write("🛠️ **Stage 2**: Invoking specialized worker agents & querying SIEM/EDR telemetry...")
             
-            result = graph.process_query(user_input, auth_context=user_auth)
+            result = graph.process_query(user_input, auth_context=user_auth,
+                                         conversation_history=st.session_state.get("messages", []))
             time.sleep(0.35)
 
             if result.get("status") == "HITL_REQUIRED":
@@ -194,7 +207,7 @@ def run_main_ui():
                 status.update(label="✅ **Multi-Agent Threat Synthesis Completed**", state="complete", expanded=False)
 
         # Append Assistant Response
-        st.session_state["messages"].append({
+        append_persistent_message({
             "role": "assistant",
             "content": result.get("response", ""),
             "trace": result.get("execution_trace", []),
@@ -205,4 +218,6 @@ def run_main_ui():
             result["action_details"] = {**(result.get("action_details") or {}), "query": user_input}
             st.session_state["hitl_state"] = result
 
+        st.session_state.pop("pending_query", None)
+        st.session_state["processing"] = False
         st.rerun()

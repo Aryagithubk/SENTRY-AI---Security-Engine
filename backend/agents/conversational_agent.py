@@ -1,8 +1,8 @@
 import re
-from typing import Dict, Any
+from typing import Dict, Any, List
 from backend.services.llm import get_llm
 from backend.utils.logger import log_stage
-from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
 
 SENTRY_IDENTITY = """I am **SENTRY** (*Security Engine for Next-generation Triage, Recommendations & Yield*), your AI-powered Security Operations Center Assistant.
 
@@ -40,7 +40,7 @@ class ConversationalAgent:
     def __init__(self, provider: str = None):
         self.provider = provider
 
-    def execute(self, query: str) -> Dict[str, Any]:
+    def execute(self, query: str, conversation_history: List[Dict[str, Any]] = None) -> Dict[str, Any]:
         q_lower = query.lower().strip()
         log_stage("Conversational Agent", f"Processing general query: '{query}'")
 
@@ -91,10 +91,14 @@ class ConversationalAgent:
             system_prompt = """You are SENTRY (Security Engine for Next-generation Triage, Recommendations & Yield), an enterprise AI Security Operations Assistant. 
 The user has asked a general or off-topic question. Respond politely in 2-3 sentences as SENTRY, answering their question briefly if appropriate, but gently steering the user back to Security Operations (threat hunting, user audits, endpoint checks, or executive reports)."""
             
-            messages = [
-                SystemMessage(content=system_prompt),
-                HumanMessage(content=query)
-            ]
+            history_messages = []
+            for message in (conversation_history or [])[-8:]:
+                content = message.get("content", "")
+                if message.get("role") == "assistant":
+                    history_messages.append(AIMessage(content=content))
+                elif message.get("role") == "user":
+                    history_messages.append(HumanMessage(content=content))
+            messages = [SystemMessage(content=system_prompt), *history_messages, HumanMessage(content=query)]
             response = llm.invoke(messages)
             content = response.content.strip()
             

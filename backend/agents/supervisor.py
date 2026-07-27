@@ -25,7 +25,8 @@ class SupervisorAgent:
     def __init__(self, provider: str = None):
         self.provider = provider
 
-    def route(self, query: str, auth_context: Optional[Dict[str, Any]] = None) -> Tuple[str, str]:
+    def route(self, query: str, auth_context: Optional[Dict[str, Any]] = None,
+              conversation_history: Optional[list[Dict[str, Any]]] = None) -> Tuple[str, str]:
         """
         Analyze query and determine appropriate agent.
         Returns: (agent_name, rationale)
@@ -50,7 +51,12 @@ class SupervisorAgent:
         # structured-output failure.
         try:
             llm = get_llm(self.provider)
-            prompt_content = f"{SUPERVISOR_PROMPT}\nUser Role: {user_role}"
+            recent_history = (conversation_history or [])[-8:]
+            history_text = "\n".join(
+                f"{message.get('role', 'user').upper()}: {message.get('content', '')}"
+                for message in recent_history
+            ) or "No prior conversation."
+            prompt_content = f"{SUPERVISOR_PROMPT}\nUser Role: {user_role}\nRecent conversation:\n{history_text}"
             messages = [
                 SystemMessage(content=prompt_content),
                 HumanMessage(content=f"User Query: {query}")

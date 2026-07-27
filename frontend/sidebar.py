@@ -1,6 +1,7 @@
 import streamlit as st
 from backend.services.api_client import SOCApiClient
 from backend.services.audit_service import AuditService
+from backend.services.db_service import DatabaseService
 
 client = SOCApiClient()
 
@@ -110,5 +111,9 @@ def render_sidebar():
                     action="LOGOUT",
                     result="SUCCESS"
                 )
+                session_id = st.session_state.get("app_session_id")
+                if session_id:
+                    DatabaseService.delete_app_session(session_id)
+                st.query_params.clear()
                 st.session_state.clear()
                 st.rerun()

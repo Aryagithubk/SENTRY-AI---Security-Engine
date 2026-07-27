@@ -120,7 +120,8 @@ class SecureOpsGraph:
         }
 
     def _orchestrate(self, state: SecureOpsState) -> Dict[str, Any]:
-        agent, reason = self.supervisor.route(state["query"], auth_context=state["auth_context"])
+        agent, reason = self.supervisor.route(state["query"], auth_context=state["auth_context"],
+                                              conversation_history=state.get("conversation_history", []))
         return {
             "active_agent": agent,
             "selected_agent": agent,
@@ -146,7 +147,7 @@ class SecureOpsGraph:
         }
 
     def _run_conversational(self, state: SecureOpsState) -> Dict[str, Any]:
-        return self._worker_result(state, self.conversational_agent.execute(state["query"]), "Stage 3: Conversational Agent")
+        return self._worker_result(state, self.conversational_agent.execute(state["query"], state.get("conversation_history", [])), "Stage 3: Conversational Agent")
 
     def _run_alert(self, state: SecureOpsState) -> Dict[str, Any]:
         return self._worker_result(state, self.alert_agent.execute(state["query"]), "Stage 3: Alert Agent & SIEM Tools")
@@ -269,11 +270,13 @@ class SecureOpsGraph:
                       hitl_approved: bool = False, conversation_history: Optional[List[Dict[str, Any]]] = None,
                       investigation_id: Optional[str] = None) -> Dict[str, Any]:
         user_auth = auth_context or {"username": "analyst_l1", "name": "Alex Mercer", "role": "L1", "role_display": "L1 SOC Analyst"}
+        history = conversation_history or []
+        contextual_query = self._apply_conversation_context(query, history)
         log_stage("Workflow Init", f"User: {user_auth.get('username')} ({user_auth.get('role')}) | Query: '{query}' | HITL Approved: {hitl_approved}")
         initial_state: SecureOpsState = {
-            "query": query, "user_query": query, "auth_context": user_auth, "user": user_auth,
-            "role": user_auth.get("role", "L1"), "conversation_history": conversation_history or [],
-            "investigation_id": investigation_id or f"INV-{uuid4().hex[:8].upper()}", "messages": conversation_history or [],
+            "query": contextual_query, "user_query": query, "auth_context": user_auth, "user": user_auth,
+            "role": user_auth.get("role", "L1"), "conversation_history": history,
+            "investigation_id": investigation_id or f"INV-{uuid4().hex[:8].upper()}", "messages": history,
             "agent_outputs": {}, "tool_outputs": [], "investigation_context": {}, "risk_assessment": {},
             "hitl_status": {"approved": hitl_approved}, "audit_entries": [], "errors": [], "execution_trace": [],
         }
@@ -286,3 +289,19 @@ class SecureOpsGraph:
             "response": response, "data": output.get("data"), "action_details": output.get("action_details"),
             "execution_trace": result.get("execution_trace", []), "investigation_id": result.get("investigation_id"),
         }
+
+    @staticmethod
+    def _apply_conversation_context(query: str, history: List[Dict[str, Any]]) -> str:
+        """Resolve a follow-up reference using the latest explicitly named entity."""
+        lower_query = query.lower()
+        has_entity = bool(re.search(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}|\b(?:\d{1,3}\.){3}\d{1,3}\b|\b(?:WS|LAPTOP|SRV|HOST|DEV|PROD|PC|MAC|WIN)-[A-Za-z0-9-]+\b", query, re.I))
+        refers_back = bool(re.search(r"\b(this|that|same|previous|it|them)\b", lower_query))
+        if has_entity or not refers_back:
+            return query
+        for message in reversed(history):
+            if message.get("role") != "user":
+                continue
+            match = re.search(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}|\b(?:\d{1,3}\.){3}\d{1,3}\b|\b(?:WS|LAPTOP|SRV|HOST|DEV|PROD|PC|MAC|WIN)-[A-Za-z0-9-]+\b", message.get("content", ""), re.I)
+            if match:
+                return f"{query}\nPrior conversation entity: {match.group(0)}"
+        return query
