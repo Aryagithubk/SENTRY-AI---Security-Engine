@@ -15,13 +15,14 @@ LANGSMITH_API_KEY=lsv2_pt_your_api_key_here
 LANGSMITH_PROJECT=SecureOps-AI
 ```
 
-When enabled, LangSmith traces:
-- **User Session & Role Context**: `session_id`, `user_id`, `user_role`
-- **Supervisor Routing**: Intent classification, confidence score, target agent delegate
-- **Worker Node Execution**: Active worker agent, rationale, execution time
-- **Tool Invocations**: Tool name, input parameters, returned records, error handling
-- **Human-in-the-Loop Interrupts**: Paused graph states, approval status
-- **Latency & Token Usage**: Turn-by-turn latency monitoring
+When enabled, each `SecureOpsGraph.process_query()` call is sent to LangSmith as a
+`SecureOps Investigation` parent run. LangGraph nodes and LangChain LLM calls are
+captured beneath that run. Runs are tagged with the application, selected provider,
+and authenticated role; the graph trace contains routing decisions, tool activity,
+HITL outcomes, errors, and latency.
+
+Do not enable tracing with production-sensitive telemetry unless your organization
+has approved sending those trace inputs to LangSmith.
 
 ---
 

@@ -16,6 +16,7 @@ from backend.agents.correlation_agent import CorrelationAgent
 from backend.workflows.human_loop import HumanInTheLoopController
 from backend.services.audit_service import AuditService
 from backend.services.rbac_service import RBACService
+from backend.services.langsmith_service import LangSmithService
 from backend.utils.intent_classifier import AlgorithmicIntentClassifier
 from backend.utils.logger import log_stage
 
@@ -280,7 +281,7 @@ class SecureOpsGraph:
             "agent_outputs": {}, "tool_outputs": [], "investigation_context": {}, "risk_assessment": {},
             "hitl_status": {"approved": hitl_approved}, "audit_entries": [], "errors": [], "execution_trace": [],
         }
-        result = self.graph.invoke(initial_state)
+        result = self.graph.invoke(initial_state, config=LangSmithService.run_config(user_auth.get("role", "L1"), self.provider))
         output = self._latest_output(result)
         log_stage("Workflow Completion", f"Workflow finished with status {result.get('status', 'SUCCESS')}")
         response = result.get("final_response") or output.get("response", "")
