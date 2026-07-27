@@ -108,10 +108,15 @@ def run_main_ui():
         return
 
     render_sidebar()
-    # The bot docks itself to the viewport; this call creates no header chrome.
-    render_bot()
-    sidebar_live_panel = st.sidebar.empty()
     render_header()
+    # The WebGL sentinel docks itself to the viewport and the graph stays in the
+    # main workspace so live query activity is visible at a glance.
+    # A dedicated placeholder lets the fixed guardian change mode during a
+    # synchronous workflow without adding duplicate floating iframes.
+    guardian_panel = st.empty()
+    render_bot(slot=guardian_panel)
+    execution_panel = st.empty()
+    render_execution_console(execution_panel, [])
 
     nav_choice = st.session_state.get("nav_choice", "💬 Copilot Chat")
 
@@ -157,7 +162,8 @@ def run_main_ui():
 
         def show_live_event(event):
             live_events.append(event)
-            render_execution_console(sidebar_live_panel, live_events)
+            render_execution_console(execution_panel, live_events)
+            render_bot(executing=True, slot=guardian_panel)
 
         with st.status("🧠 **SENTRY AI Thinking...** Executing authorized security action...", expanded=True) as status:
             status.write("⚙️ Initializing authorized incident ticket parameters...")
@@ -173,7 +179,8 @@ def run_main_ui():
             status.write("✅ Incident creation confirmed in Incident Management System.")
             time.sleep(0.3)
             status.update(label="✅ **Execution Completed**", state="complete", expanded=False)
-        render_execution_console(sidebar_live_panel, live_events, complete=True)
+        render_execution_console(execution_panel, live_events, complete=True)
+        render_bot(executing=False, slot=guardian_panel)
 
         append_persistent_message({
             "role": "assistant",
@@ -208,7 +215,8 @@ def run_main_ui():
 
         def show_live_event(event):
             live_events.append(event)
-            render_execution_console(sidebar_live_panel, live_events)
+            render_execution_console(execution_panel, live_events)
+            render_bot(executing=True, slot=guardian_panel)
 
         # AI Thinking & Reasoning Status Expander
         with st.status("🧠 **SENTRY AI Thinking & Reasoning...**", expanded=True) as status:
@@ -232,7 +240,8 @@ def run_main_ui():
                 time.sleep(0.35)
                 status.update(label="✅ **Multi-Agent Threat Synthesis Completed**", state="complete", expanded=False)
 
-        render_execution_console(sidebar_live_panel, live_events, complete=result.get("status") != "HITL_REQUIRED")
+        render_execution_console(execution_panel, live_events, complete=result.get("status") != "HITL_REQUIRED")
+        render_bot(executing=False, slot=guardian_panel)
 
         # Append Assistant Response
         append_persistent_message({
