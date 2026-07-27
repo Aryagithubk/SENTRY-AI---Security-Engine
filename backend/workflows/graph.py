@@ -1,5 +1,5 @@
 import re
-from typing import Dict, Any, List, Optional
+from typing import Callable, Dict, Any, List, Optional
 from uuid import uuid4
 
 from langgraph.graph import END, START, StateGraph
@@ -269,7 +269,8 @@ class SecureOpsGraph:
 
     def process_query(self, query: str, auth_context: Optional[Dict[str, Any]] = None,
                       hitl_approved: bool = False, conversation_history: Optional[List[Dict[str, Any]]] = None,
-                      investigation_id: Optional[str] = None) -> Dict[str, Any]:
+                      investigation_id: Optional[str] = None,
+                      on_event: Optional[Callable[[Dict[str, Any]], None]] = None) -> Dict[str, Any]:
         user_auth = auth_context or {"username": "analyst_l1", "name": "Alex Mercer", "role": "L1", "role_display": "L1 SOC Analyst"}
         history = conversation_history or []
         contextual_query = self._apply_conversation_context(query, history)
@@ -281,7 +282,30 @@ class SecureOpsGraph:
             "agent_outputs": {}, "tool_outputs": [], "investigation_context": {}, "risk_assessment": {},
             "hitl_status": {"approved": hitl_approved}, "audit_entries": [], "errors": [], "execution_trace": [],
         }
-        result = self.graph.invoke(initial_state, config=LangSmithService.run_config(user_auth.get("role", "L1"), self.provider))
+        run_config = LangSmithService.run_config(user_auth.get("role", "L1"), self.provider)
+        if on_event:
+            # LangGraph's value stream gives the interface the same node sequence
+            # that executes on the server, without coupling workflow code to Streamlit.
+            result = initial_state
+            emitted_trace_count = 0
+            for state in self.graph.stream(initial_state, config=run_config, stream_mode="values"):
+                result = state
+                trace = state.get("execution_trace", [])
+                for entry in trace[emitted_trace_count:]:
+                    title = entry.get("stage_title", "Workflow node")
+                    raw_stage = entry.get("stage_number", 1)
+                    visual_stage = 1 if raw_stage <= 2 else 2 if raw_stage == 3 else 3 if raw_stage == 4 else 4
+                    agent = entry.get("agent", "SENTRY Orchestrator")
+                    detail = entry.get("reason") or entry.get("decision") or title
+                    on_event({"event": "node_started", "node": agent, "stage": visual_stage, "detail": detail})
+                    for tool in entry.get("tool_calls", []):
+                        on_event({"event": "tool_completed", "node": agent, "stage": 3,
+                                  "tool": tool.get("tool", "telemetry_tool"), "detail": "Telemetry operation returned"})
+                    event_name = "node_waiting" if entry.get("status") == "WAITING_FOR_ANALYST" else "node_completed"
+                    on_event({"event": event_name, "node": agent, "stage": visual_stage, "detail": detail})
+                emitted_trace_count = len(trace)
+        else:
+            result = self.graph.invoke(initial_state, config=run_config)
         output = self._latest_output(result)
         log_stage("Workflow Completion", f"Workflow finished with status {result.get('status', 'SUCCESS')}")
         response = result.get("final_response") or output.get("response", "")
