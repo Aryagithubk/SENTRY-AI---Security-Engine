@@ -1,101 +1,104 @@
+"""Chat and safe execution-summary presentation components."""
+
 import time
+
 import streamlit as st
 
+
 def stream_words(text: str):
-    """Word streaming generator for smooth typewriter animation."""
+    """Small, readable streaming effect for a newly generated response."""
     words = text.split(" ")
-    for i, word in enumerate(words):
-        yield word + (" " if i < len(words) - 1 else "")
+    for index, word in enumerate(words):
+        yield word + (" " if index < len(words) - 1 else "")
         time.sleep(0.012)
 
+
 def render_chat_messages():
-    """Render chat conversation history with glowing message borders and typewriter streaming."""
-    # Reset old session messages if legacy 'SecureOps AI' welcome exists in session state
+    """Render persisted messages and safe agent execution summaries."""
     if "messages" in st.session_state and st.session_state["messages"]:
-        first_msg = st.session_state["messages"][0].get("content", "")
-        if "Welcome to SecureOps AI" in first_msg or "SecureOps AI Assistant" in first_msg:
+        first_message = st.session_state["messages"][0].get("content", "")
+        if "Welcome to SecureOps AI" in first_message or "SecureOps AI Assistant" in first_message:
             st.session_state["messages"] = []
 
-    if "messages" not in st.session_state or not st.session_state["messages"]:
-        st.session_state["messages"] = [
-            {
-                "role": "assistant",
-                "content": "👋 **Hello! I am SENTRY** (*Security Engine for Next-generation Triage, Recommendations & Yield*), your AI Security Operations Assistant.\n\nI am here to help you with multi-agent SIEM threat hunting, user identity audits, endpoint health diagnostics, and executive CISO reporting.\n\n*Type a query below or select a quick threat scenario from the sidebar to begin!*"
-            }
-        ]
+    if not st.session_state.get("messages"):
+        st.session_state["messages"] = [{
+            "role": "assistant",
+            "content": (
+                "**Welcome to SENTRY AI.** I can help investigate SIEM alerts, identity activity, "
+                "endpoint health, incidents, and executive reporting.\n\n"
+                "Ask a security question or select a runbook from the command sidebar to begin."
+            ),
+        }]
 
-    for idx, msg in enumerate(st.session_state["messages"]):
-        avatar_icon = "🛡️" if msg["role"] == "assistant" else "👤"
-        
-        with st.chat_message(msg["role"], avatar=avatar_icon):
-            # Display structured stage execution timeline if present
-            if "trace" in msg and msg["trace"]:
-                with st.expander("🔍 **View Multi-Agent Stage Execution Log**", expanded=False):
-                    for step in msg["trace"]:
-                        stage_title = step.get("stage_title") or f"Stage: {step.get('step', 'Execution')}"
-                        agent_name = step.get("agent") or step.get("decision", "Agent")
-                        
-                        st.markdown(f"##### {stage_title}")
-                        st.markdown(f"- **Active Agent**: `{agent_name}`")
-                        if "reason" in step:
-                            st.markdown(f"- **Routing Rationale**: *{step['reason']}*")
-                        if "decision" in step:
-                            st.markdown(f"- **Target Delegate**: `{step['decision']}`")
-                        if "tool_calls" in step and step["tool_calls"]:
-                            st.markdown("- **Invoked Tools & Telemetry Queries**:")
-                            for tc in step["tool_calls"]:
-                                st.markdown(f"  - 🛠️ Tool: `{tc.get('tool')}` | Parameters: `{tc}`")
-                        st.markdown("---")
+    for message in st.session_state["messages"]:
+        avatar = "🛡️" if message["role"] == "assistant" else "👤"
+        with st.chat_message(message["role"], avatar=avatar):
+            trace = message.get("trace") or []
+            if trace:
+                with st.expander("Agent execution summary", expanded=False):
+                    for step in trace:
+                        stage = step.get("stage_title") or f"Stage: {step.get('step', 'Execution')}"
+                        agent = step.get("agent") or step.get("decision", "Agent")
+                        st.markdown(f"##### {stage}")
+                        st.markdown(f"**Active agent:** `{agent}`")
+                        if step.get("reason"):
+                            st.caption(f"Selection summary: {step['reason']}")
+                        if step.get("decision"):
+                            st.caption(f"Delegated to: {step['decision']}")
+                        if step.get("tool_calls"):
+                            st.caption("Telemetry tools used")
+                            for tool_call in step["tool_calls"]:
+                                st.markdown(f"- `{tool_call.get('tool', 'Tool')}`")
 
-                # Header badge summary
-                trace_html = ""
-                for step in msg["trace"]:
-                    agent_name = step.get("agent") or step.get("decision", "Agent")
-                    trace_html += f'<span class="trace-badge">🤖 {agent_name}</span>'
-                st.markdown(trace_html, unsafe_allow_html=True)
-                st.markdown("")
+                badge_markup = "".join(
+                    f'<span class="trace-badge">{step.get("agent") or step.get("decision", "Agent")}</span>'
+                    for step in trace
+                )
+                st.markdown(badge_markup, unsafe_allow_html=True)
 
-            # Typewriter Streaming Animation for newly added assistant response
-            if msg["role"] == "assistant" and msg.get("stream_flag"):
-                msg["stream_flag"] = False  # Only stream once
-                st.write_stream(stream_words(msg["content"]))
+            if message["role"] == "assistant" and message.get("stream_flag"):
+                message["stream_flag"] = False
+                st.write_stream(stream_words(message["content"]))
             else:
-                st.markdown(msg["content"])
+                st.markdown(message["content"])
+
 
 def render_hitl_dialog():
-    """Render Human-in-the-Loop authorization dialog."""
+    """Render a clear approval boundary for sensitive security operations."""
     hitl_state = st.session_state.get("hitl_state")
-    if hitl_state:
-        action = hitl_state.get("action_details", {})
-        st.markdown(
-            f"""
-            <div style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.5); border-radius: 14px; padding: 1.25rem; margin: 1rem 0; box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);">
-                <div style="color: #F87171; font-weight: 800; font-size: 1.1rem; margin-bottom: 0.5rem;">⚠️ Human-in-the-Loop Authorization Required</div>
-                <p style="margin-bottom: 0.5rem;">The <b>{hitl_state.get('target_agent')}</b> is requesting analyst authorization for a sensitive security action:</p>
-                <ul style="margin-bottom: 0.5rem;">
-                    <li><b>Action</b>: {action.get('action', 'Security action')}</li>
-                    <li><b>Target Device</b>: <code>{action.get('target_host', 'N/A')}</code></li>
-                    <li><b>Target User</b>: <code>{action.get('target_user', 'N/A')}</code></li>
-                </ul>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+    if not hitl_state:
+        return
 
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("✅ Authorize Action", type="primary", use_container_width=True):
-                st.session_state["hitl_approved"] = True
-                st.session_state["hitl_query"] = action.get("query", "")
-                st.session_state["hitl_state"] = None
-                st.rerun()
-        with col2:
-            if st.button("❌ Abort Action", use_container_width=True):
-                st.session_state["hitl_approved"] = False
-                st.session_state.pop("hitl_query", None)
-                st.session_state["hitl_state"] = None
-                st.session_state["messages"].append({
-                    "role": "assistant",
-                    "content": "🚫 **Operation Aborted**: Incident creation cancelled by analyst."
-                })
-                st.rerun()
+    action = hitl_state.get("action_details", {})
+    st.markdown(
+        f"""
+        <section class="hitl-panel" role="alert">
+            <div class="hitl-eyebrow">HUMAN APPROVAL REQUIRED</div>
+            <h3>Review proposed security action</h3>
+            <p><b>{hitl_state.get('target_agent', 'Security agent')}</b> requests analyst approval before a sensitive action is performed.</p>
+            <div class="hitl-meta">
+                <div><span>ACTION</span><b>{action.get('action', 'Security action')}</b></div>
+                <div><span>AFFECTED HOST</span><b>{action.get('target_host', 'N/A')}</b></div>
+                <div><span>AFFECTED USER</span><b>{action.get('target_user', 'N/A')}</b></div>
+            </div>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
+    approve, reject = st.columns(2)
+    with approve:
+        if st.button("Approve action", type="primary", use_container_width=True):
+            st.session_state["hitl_approved"] = True
+            st.session_state["hitl_query"] = action.get("query", "")
+            st.session_state["hitl_state"] = None
+            st.rerun()
+    with reject:
+        if st.button("Reject action", use_container_width=True):
+            st.session_state["hitl_approved"] = False
+            st.session_state.pop("hitl_query", None)
+            st.session_state["hitl_state"] = None
+            st.session_state.setdefault("messages", []).append({
+                "role": "assistant",
+                "content": "**Operation rejected.** The proposed security action was not performed.",
+            })
+            st.rerun()

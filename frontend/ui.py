@@ -65,8 +65,8 @@ def render_header():
                 </div>
                 <div>
                     <div class="soc-title-text">SENTRY AI</div>
-                    <div style="color: #06B6D4; font-size: 0.8rem; font-weight: 600; margin-top: -4px;">
-                        Role: <span style="color: #A855F7;">{user.get('role_display', 'L1 Analyst')}</span> ({user.get('email', '')})
+                    <div class="soc-role">
+                        Role: <b>{user.get('role_display', 'L1 Analyst')}</b> ({user.get('email', '')})
                     </div>
                 </div>
             </div>
