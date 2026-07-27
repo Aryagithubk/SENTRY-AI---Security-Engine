@@ -39,6 +39,10 @@ def test_alert_agent():
     assert "data" in res
     assert len(res["data"]) >= 0
 
+    typo_res = alert_agent.execute("show critical sevrity alert")
+    assert typo_res["data"]
+    assert all(alert["severity"] == "CRITICAL" for alert in typo_res["data"])
+
 def test_identity_agent():
     id_agent = IdentityAgent()
     res = id_agent.execute("Check user johndoe@securetech.com")

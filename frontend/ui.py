@@ -126,7 +126,8 @@ def run_main_ui():
         with st.status("🧠 **SENTRY AI Thinking...** Executing authorized security action...", expanded=True) as status:
             status.write("⚙️ Initializing authorized incident ticket parameters...")
             time.sleep(0.3)
-            res = graph.process_query("create security incident for host WS-FINANCE-04", auth_context=user_auth, hitl_approved=True)
+            approved_query = st.session_state.pop("hitl_query", "create security incident")
+            res = graph.process_query(approved_query, auth_context=user_auth, hitl_approved=True)
             status.write("✅ Incident creation confirmed in Incident Management System.")
             time.sleep(0.3)
             status.update(label="✅ **Execution Completed**", state="complete", expanded=False)
@@ -180,6 +181,7 @@ def run_main_ui():
         })
         
         if result.get("status") == "HITL_REQUIRED":
+            result["action_details"] = {**(result.get("action_details") or {}), "query": user_input}
             st.session_state["hitl_state"] = result
 
         st.rerun()

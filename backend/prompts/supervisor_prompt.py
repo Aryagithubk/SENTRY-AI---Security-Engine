@@ -8,6 +8,7 @@ Target Agents:
 4. "Endpoint Agent": Handle host workstation health, EDR agent telemetry, process execution, IP reputation, or ransomware flags on endpoints.
 5. "Incident Agent": Handle requests to create, open, or escalate security incident tickets or isolate hosts.
 6. "Reporting Agent": Handle requests to generate executive summaries, CISO reports, investigation reports, or multi-vector threat playbooks.
+7. "Threat Correlation Agent": Handle threat hunting, event correlation, attack-chain analysis, and cross-domain campaign investigation.
 
 Routing Rules:
 - If query is a greeting, farewell, identity question ("who are you"), profanity, or general chit-chat -> Route to "Conversational Agent".
@@ -16,6 +17,9 @@ Routing Rules:
 - If query mentions user login history, failed password, email, or MFA -> Route to "Identity Agent".
 - If query mentions host status, EDR, IP address, or workstation health -> Route to "Endpoint Agent".
 - If query asks for security alerts or threat lists -> Route to "Alert Agent".
+- If query asks to correlate events, hunt for threats, or investigate an attack chain -> Route to "Threat Correlation Agent".
+
+Use the request, user role, and the available agents to make one routing decision. Do not invent security findings or use a default demo target.
 
 Output format: You MUST return ONLY a valid JSON object:
 {

@@ -22,13 +22,22 @@ class SupervisorAgent:
         """
         user_role = (auth_context or {}).get("role", "L1")
 
-        # 1. Deterministic Fast-Path Check using Algorithmic Intent Classifier
+        # Guardrails are deterministic.  All other requests are delegated to
+        # the selected LLM so the supervisor can make an actual routing choice.
         alg_agent, alg_score, alg_reason = AlgorithmicIntentClassifier.classify(query)
-        if alg_score >= 0.80:
+        is_guardrail = alg_reason.startswith("Matched conversational") or alg_reason.startswith("Matched profanity")
+        if is_guardrail:
             log_stage("Supervisor Fast-Path", f"User: {(auth_context or {}).get('username')} ({user_role}) | Query: '{query}' -> Routed to: '{alg_agent}' ({alg_reason})")
             return alg_agent, alg_reason
 
-        # 2. LLM Orchestrator Reasoning Fallback
+        # Offline mode has no reasoning model.  Its deterministic router is a
+        # clearly labelled fallback, not the normal orchestration path.
+        if self.provider == "mock":
+            log_stage("Supervisor Offline Routing", f"Query: '{query}' -> Routed to: '{alg_agent}' ({alg_reason})")
+            return alg_agent, alg_reason
+
+        # LLM supervisor decision with deterministic fallback on provider or
+        # structured-output failure.
         try:
             llm = get_llm(self.provider)
             prompt_content = f"{SUPERVISOR_PROMPT}\nUser Role: {user_role}"
@@ -42,6 +51,12 @@ class SupervisorAgent:
             # Parse JSON decision
             data = json.loads(content)
             agent = data.get("agent", "Conversational Agent")
+            valid_agents = {
+                "Conversational Agent", "Alert Agent", "Identity Agent", "Endpoint Agent",
+                "Incident Agent", "Reporting Agent", "Threat Correlation Agent",
+            }
+            if agent not in valid_agents:
+                raise ValueError(f"Unsupported supervisor route: {agent}")
             reason = data.get("reason", "Routed based on query intent")
             log_stage("Supervisor LLM Routing", f"User Role: {user_role} | Query: '{query}' -> Routed to: '{agent}' ({reason})")
             return agent, reason

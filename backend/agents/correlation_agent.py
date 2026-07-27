@@ -1,84 +1,74 @@
-from typing import Dict, Any, Optional
-from backend.services.rbac_service import RBACService
+from typing import Any, Dict, Optional
+
 from backend.services.audit_service import AuditService
 from backend.services.correlation_service import ThreatCorrelationService
+from backend.services.rbac_service import RBACService
 from backend.utils.logger import log_stage
 
+
 class CorrelationAgent:
-    """
-    Phase 2 Agent specialized in Threat Hunting, Event Correlation, and Attack Chain Construction.
-    Enforces RBAC authorization and logs compliance audit records.
-    """
+    """Correlates the evidence in the user's requested scope after RBAC approval."""
 
     def execute(self, query: str, auth_context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         user_role = (auth_context or {}).get("role", "L1")
         user_id = (auth_context or {}).get("username", "analyst_l1")
-
-        # 1. RBAC Authorization Check
-        is_auth, auth_msg = RBACService.authorize_action(user_role, "correlate_events")
-        if not is_auth:
-            log_stage("Correlation Agent", f"Access Denied for role {user_role}: {auth_msg}", level="warning")
-            AuditService.log_event(
-                user_id=user_id, user_role=user_role, action="THREAT_CORRELATION", result="DENIED", details=auth_msg
-            )
+        is_authorized, authorization_message = RBACService.authorize_action(user_role, "correlate_events")
+        if not is_authorized:
+            log_stage("Correlation Agent", f"Access denied for role {user_role}: {authorization_message}", level="warning")
+            AuditService.log_event(user_id=user_id, user_role=user_role, action="THREAT_CORRELATION", result="DENIED", details=authorization_message)
             return {
                 "agent": "Threat Correlation Agent",
-                "response": f"🔒 **Permission Denied: Elevated Authorization Required**\n\n{auth_msg}\n\n*Threat Hunting and Multi-Event Correlation requires **L2 SOC Analyst** or **SOC Manager** privileges.*",
+                "response": f"🔒 **Permission Denied: Elevated Authorization Required**\n\n{authorization_message}\n\n*Threat hunting and multi-event correlation require an L2 SOC Analyst or SOC Manager role.*",
                 "data": {"authorized": False},
-                "tool_calls": []
+                "tool_calls": [],
             }
 
-        log_stage("Correlation Agent", f"Executing threat correlation analysis for query: '{query}'")
+        result = ThreatCorrelationService.correlate_investigation(query=query)
+        if result.get("no_evidence"):
+            return {
+                "agent": "Threat Correlation Agent",
+                "response": "ℹ️ **No Correlated Evidence Found**\n\nNo telemetry matched the requested scope. Verify the user, host, or IP address and try again.",
+                "data": result,
+                "tool_calls": [{"tool": "correlate_investigation", "scope": result.get("scope"), "results_count": 0}],
+            }
 
-        # Extract potential entities from query
-        correlation_result = ThreatCorrelationService.correlate_investigation()
+        user = result.get("target_user") or {}
+        host = result.get("target_host") or {}
+        evidence_rows = "\n".join(
+            f"- `[{alert.get('severity')}]` `{alert.get('timestamp')}` - **{alert.get('title')}** ({alert.get('source')})"
+            for alert in result["matched_alerts"]
+        )
+        reasons = "\n".join(f"- {reason}" for reason in result["explainability"]["reasons"])
 
-        # Log compliance audit event
         AuditService.log_event(
             user_id=user_id,
             user_role=user_role,
             action="THREAT_CORRELATION",
-            resource=f"Target: {correlation_result['target_user'].get('email')} / {correlation_result['target_host'].get('hostname')}",
+            resource=f"Target: {user.get('email', 'environment scope')} / {host.get('hostname', 'environment scope')}",
             result="SUCCESS",
-            details=f"Risk Level: {correlation_result['risk_level']} ({correlation_result['composite_risk']}/100)"
+            details=f"Risk Level: {result['risk_level']} ({result['composite_risk']}/100)",
         )
+        response = f"""# 🕸️ Multi-Vector Threat Correlation
+**Correlated User**: `{user.get('name', 'N/A')}` (`{user.get('email', 'N/A')}`) | **Endpoint**: `{host.get('hostname', 'N/A')}` (`{host.get('ip_address', 'N/A')}`)
+**Risk**: `{result['risk_level']}` (`{result['composite_risk']}/100`) | **Confidence**: `{result['confidence_pct']}%`
 
-        user = correlation_result["target_user"]
-        host = correlation_result["target_host"]
-        threat = correlation_result["threat_intel"]
-        exp = correlation_result["explainability"]
+### Evidence-Based Correlation Rationale
+{reasons}
 
-        # Format Markdown Explanation
-        summary_md = f"""# 🕸️ Multi-Vector Threat Correlation & Attack Chain Analysis
-**Correlated Target**: `{user.get('name')}` (`{user.get('email')}`) | **Device**: `{host.get('hostname')}` (`{host.get('ip_address')}`)  
-**Composite Risk Level**: **`{correlation_result['risk_level']}`** (`{correlation_result['composite_risk']}/100`) | **Confidence**: `{correlation_result['confidence_pct']}%`
+### Correlated Event Timeline
+{evidence_rows}
 
----
-
-### 🔍 1. Explainable Correlation Rationale ("Why Am I Seeing This?")
-- **User Identity Anomaly**: User risk score `{user.get('risk_score')}/100` with Impossible Travel logins detected.
-- **Endpoint Compromise**: `{host.get('hostname')}` status is `{host.get('health_status')}` with detected Cobalt Strike PowerShell beaconing.
-- **Threat Actor Attribution**: C2 IP `{threat.get('indicator')}` positively identified as `{threat.get('threat_actor')}` infrastructure.
-- **Correlated Events**: `{len(correlation_result['matched_alerts'])} SIEM alerts` linked across Identity, EDR, Firewall, and Cloud Trail.
-
----
-
-### 🔗 2. Graphical Attack Chain Sequence
-1. 🌐 **Malicious C2 IP** (`{threat.get('indicator')}`) → Outbound reconnaissance & credential harvesting.
-2. 👤 **Identity Breach** (`{user.get('email')}`) → Brute force & Impossible travel login from Bucharest.
-3. 💻 **Device Infection** (`{host.get('hostname')}`) → Base64 PowerShell execution downloading ransomware payload.
-4. ⚠️ **C2 Beaconing** → Active TLS TCP 443 telemetry session to adversary server.
-5. 🚨 **Impair Defenses & Encryption** → Rapid file modification (`.locked`) and AWS security group edits.
-
----
-
-### 💡 3. Recommended Analyst Actions
-{exp['recommended_next_step']}
+### Recommended Analyst Actions
+{result['explainability']['recommended_next_step']}
 """
-
         return {
             "agent": "Threat Correlation Agent",
-            "response": summary_md,
-            "data": correlation_result,
-            "tool_calls": [{"tool": "correlate_investigation", "target_user": user.get("email"), "target_host": host.get("hostname")}]
+            "response": response,
+            "data": result,
+            "tool_calls": [{
+                "tool": "correlate_investigation",
+                "target_user": user.get("email"),
+                "target_host": host.get("hostname"),
+                "alerts_correlated": len(result["matched_alerts"]),
+            }],
         }

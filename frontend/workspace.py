@@ -9,7 +9,6 @@ def render_investigation_workspace():
     role_display = user.get("role_display", "L1 SOC Analyst")
 
     ws = InvestigationWorkspaceService.get_or_create_workspace(
-        investigation_id="INV-2026-001",
         assigned_user=user.get("email", "alex.m@securetech.com"),
         assigned_role=role_display
     )
@@ -27,7 +26,7 @@ def render_investigation_workspace():
     with col3:
         st.metric("Correlated Alerts", len(ws["matched_alerts"]))
     with col4:
-        st.metric("Target Host Health", ws["target_host"].get("health_status"), delta="WS-FINANCE-04", delta_color="inverse")
+        st.metric("Target Host Health", ws["target_host"].get("health_status", "N/A"), delta=ws["target_host"].get("hostname", "Environment scope"), delta_color="inverse")
 
     st.markdown("---")
 
@@ -50,7 +49,7 @@ def render_investigation_workspace():
                 f"""
                 <div style="background: rgba(14, 15, 23, 0.8); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 12px; padding: 1rem; margin-bottom: 0.75rem; box-shadow: 0 4px 15px rgba(0,0,0,0.4);">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-weight: 700; color: #06B6D4; font-size: 1.05rem;">{node['icon']} Step {idx}: {node['title']}</span>
+                        <span style="font-weight: 700; color: #06B6D4; font-size: 1.05rem;">{node.get('icon', '🔗')} Step {idx}: {node['title']}</span>
                         <span style="background: rgba(239, 68, 68, 0.2); border: 1px solid #EF4444; color: #F87171; padding: 2px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 700;">{node['status']}</span>
                     </div>
                     <p style="color: #94A3B8; margin-top: 0.4rem; margin-bottom: 0; font-size: 0.9rem;">{node['description']}</p>

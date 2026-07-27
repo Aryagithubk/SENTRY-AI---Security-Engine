@@ -1,81 +1,66 @@
-from typing import Dict, Any, Optional
-from backend.tools.create_incident import create_incident
-from backend.services.rbac_service import RBACService
+from typing import Any, Dict, Optional
+
+from backend.services.api_client import SOCApiClient
 from backend.services.audit_service import AuditService
+from backend.services.rbac_service import RBACService
+from backend.tools.create_incident import create_incident
 from backend.utils.logger import log_stage
 
+
 class IncidentAgent:
-    """
-    Specialized agent for Incident Management, Ticket Escalation, and Host Containment.
-    Enforces RBAC permissions (SOC Manager required) and Human-in-the-Loop authorization.
-    """
+    """Creates an incident only for a resolved, approved request target."""
+
+    def __init__(self):
+        self.client = SOCApiClient()
+
+    @staticmethod
+    def _highest_severity(alerts):
+        order = {"CRITICAL": 4, "HIGH": 3, "MEDIUM": 2, "LOW": 1}
+        return max((alert.get("severity", "MEDIUM").upper() for alert in alerts), key=lambda value: order.get(value, 0), default="MEDIUM")
+
+    def _resolve_context(self, query: str) -> Dict[str, Any]:
+        endpoints = self.client.get_endpoints(query)
+        users = self.client.get_users(query)
+        endpoint = endpoints[0] if endpoints else None
+        user = users[0] if users else None
+        if user is None and endpoint and endpoint.get("assigned_user"):
+            matches = self.client.get_users(endpoint["assigned_user"])
+            user = matches[0] if matches else None
+        if endpoint is None and user:
+            matches = self.client.get_endpoints(user.get("email"))
+            endpoint = matches[0] if matches else None
+        key = (endpoint or {}).get("hostname") or (user or {}).get("email") or query
+        alerts = self.client.get_alerts(key)
+        return {"endpoint": endpoint, "user": user, "alerts": alerts}
 
     def execute(self, query: str, approved: bool = False, auth_context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         user_role = (auth_context or {}).get("role", "L1")
         user_id = (auth_context or {}).get("username", "analyst_l1")
+        allowed, message = RBACService.authorize_action(user_role, "create_incident")
+        if not allowed:
+            AuditService.log_event(user_id=user_id, user_role=user_role, action="CREATE_INCIDENT", resource=query[:80], result="DENIED", details=message)
+            return {"agent": "Incident Agent", "response": f"🔒 **Permission Denied: Elevated Authorization Required**\n\n{message}", "data": {"authorized": False}, "tool_calls": []}
 
-        # 1. RBAC Permission Check
-        is_auth, auth_msg = RBACService.authorize_action(user_role, "create_incident")
-        if not is_auth:
-            log_stage("Incident Agent", f"Incident escalation blocked for role '{user_role}': {auth_msg}", level="warning")
-            AuditService.log_event(
-                user_id=user_id,
-                user_role=user_role,
-                action="CREATE_INCIDENT",
-                resource="WS-FINANCE-04",
-                result="DENIED",
-                details="Action requires SOC Manager / Incident Commander role."
-            )
-            return {
-                "agent": "Incident Agent",
-                "response": f"🔒 **Permission Denied: Elevated Authorization Required**\n\nDirect Incident Escalation and Creation requires **SOC Manager / Incident Commander** privileges. You are currently operating as **{user_role}**.\n\n*An escalation request has been logged in the audit trail for Manager review.*",
-                "data": {"authorized": False, "requires_approval": True},
-                "tool_calls": []
-            }
+        context = self._resolve_context(query)
+        endpoint, affected_user, alerts = context["endpoint"], context["user"], context["alerts"]
+        if endpoint is None and affected_user is None:
+            return {"agent": "Incident Agent", "response": "ℹ️ **Incident Target Not Found**\n\nProvide a valid hostname, IP address, or user email before creating an incident.", "data": {"authorized": True, "found": False}, "tool_calls": []}
 
-        # 2. Human-in-the-Loop Authorization Check
+        host_name = (endpoint or {}).get("hostname", "Unspecified host")
+        user_email = (affected_user or {}).get("email", (endpoint or {}).get("assigned_user", "Unspecified user"))
+        severity = self._highest_severity(alerts)
+        title = f"Security investigation: {host_name} / {user_email}"
+        related_alerts = [alert.get("alert_id") for alert in alerts if alert.get("alert_id")]
+        summary = f"Incident requested for {host_name} and {user_email}. Evidence references {len(related_alerts)} matching alert(s)."
+        action_details = {"action": "Create Security Incident", "target_host": host_name, "target_user": user_email, "severity": severity, "description": summary, "query": query}
+
         if not approved:
-            log_stage("Incident Agent", "HITL Authorization Required: Pausing workflow for analyst approval", level="warning")
-            return {
-                "agent": "Incident Agent",
-                "requires_hitl": True,
-                "hitl_action": "CREATE_SECURITY_INCIDENT",
-                "action_details": {
-                    "action": "Create Security Incident & Isolate Host",
-                    "target_host": "WS-FINANCE-04",
-                    "target_user": "sarah.c@securetech.com",
-                    "severity": "HIGH",
-                    "description": "Active LockBit ransomware payload & Cobalt Strike C2 beaconing detected."
-                },
-                "response": "⚠️ **Human-in-the-Loop Confirmation Required**\n\nAuthorization requested to create a High-Severity Security Incident ticket for host **WS-FINANCE-04** (`10.0.4.45`) and user **sarah.c@securetech.com**.\n\n*Please confirm or abort this operation in the dialog below.*"
-            }
+            return {"agent": "Incident Agent", "requires_hitl": True, "hitl_action": "CREATE_SECURITY_INCIDENT", "action_details": action_details,
+                    "response": f"⚠️ **Human-in-the-Loop Confirmation Required**\n\nAuthorize creation of a `{severity}` incident for host `{host_name}` and user `{user_email}`?"}
 
-        # 3. Execution upon HITL Approval
-        log_stage("Incident Agent", f"Action Authorized by {user_id} ({user_role}). Creating incident ticket...")
-        
-        inc_data = create_incident(
-            title="Active Ransomware & C2 Beaconing on WS-FINANCE-04",
-            severity="CRITICAL",
-            summary="Multi-stage attack involving PowerShell payload execution, Cobalt Strike C2 beaconing (185.220.101.5), and mass file encryption.",
-            affected_user="sarah.c@securetech.com",
-            affected_host="WS-FINANCE-04",
-            related_alerts=["ALT-1003", "ALT-1004", "ALT-1005"]
-        )
-
-        # Log compliance audit record
-        AuditService.log_event(
-            user_id=user_id,
-            user_role=user_role,
-            action="INCIDENT_CREATED",
-            resource=inc_data.get("incident_id", "INC-2026-001"),
-            result="SUCCESS",
-            details=f"Created incident ticket {inc_data.get('incident_id')} for WS-FINANCE-04 upon HITL authorization."
-        )
-
-        return {
-            "agent": "Incident Agent",
-            "requires_hitl": False,
-            "response": f"✅ **Security Incident Created & Host Isolated**\n\n- **Incident Ticket**: `{inc_data.get('incident_id')}`\n- **Severity**: `{inc_data.get('severity')}`\n- **Affected Target**: `sarah.c@securetech.com` (`WS-FINANCE-04`)\n- **Status**: `{inc_data.get('status')}`\n- **Timestamp**: `{inc_data.get('created_at')}`\n\n*EDR Network Containment rule applied. Incident response team notified.*",
-            "data": inc_data,
-            "tool_calls": [{"tool": "create_incident", "incident_id": inc_data.get("incident_id"), "approved_by": user_id}]
-        }
+        log_stage("Incident Agent", f"Creating approved incident for {host_name} and {user_email}")
+        incident = create_incident(title=title, severity=severity, summary=summary, affected_user=user_email, affected_host=host_name, related_alerts=related_alerts)
+        AuditService.log_event(user_id=user_id, user_role=user_role, action="INCIDENT_CREATED", resource=incident.get("incident_id", "N/A"), result="SUCCESS", details=f"Created after HITL approval for {host_name}.")
+        return {"agent": "Incident Agent", "requires_hitl": False,
+                "response": f"✅ **Security Incident Created**\n\n- **Incident Ticket**: `{incident.get('incident_id')}`\n- **Severity**: `{incident.get('severity')}`\n- **Affected Target**: `{user_email}` (`{host_name}`)\n- **Status**: `{incident.get('status')}`",
+                "data": incident, "tool_calls": [{"tool": "create_incident", "incident_id": incident.get("incident_id"), "approved_by": user_id}]}

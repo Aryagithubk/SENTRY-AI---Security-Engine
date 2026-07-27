@@ -66,15 +66,16 @@ def render_hitl_dialog():
     """Render Human-in-the-Loop authorization dialog."""
     hitl_state = st.session_state.get("hitl_state")
     if hitl_state:
+        action = hitl_state.get("action_details", {})
         st.markdown(
             f"""
             <div style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.5); border-radius: 14px; padding: 1.25rem; margin: 1rem 0; box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);">
                 <div style="color: #F87171; font-weight: 800; font-size: 1.1rem; margin-bottom: 0.5rem;">⚠️ Human-in-the-Loop Authorization Required</div>
                 <p style="margin-bottom: 0.5rem;">The <b>{hitl_state.get('target_agent')}</b> is requesting analyst authorization for a sensitive security action:</p>
                 <ul style="margin-bottom: 0.5rem;">
-                    <li><b>Action</b>: Create / Escalate Security Incident Ticket</li>
-                    <li><b>Target Device</b>: <code>WS-FINANCE-04</code></li>
-                    <li><b>Target User</b>: <code>sarah.c@securetech.com</code></li>
+                    <li><b>Action</b>: {action.get('action', 'Security action')}</li>
+                    <li><b>Target Device</b>: <code>{action.get('target_host', 'N/A')}</code></li>
+                    <li><b>Target User</b>: <code>{action.get('target_user', 'N/A')}</code></li>
                 </ul>
             </div>
             """,
@@ -85,11 +86,13 @@ def render_hitl_dialog():
         with col1:
             if st.button("✅ Authorize Action", type="primary", use_container_width=True):
                 st.session_state["hitl_approved"] = True
+                st.session_state["hitl_query"] = action.get("query", "")
                 st.session_state["hitl_state"] = None
                 st.rerun()
         with col2:
             if st.button("❌ Abort Action", use_container_width=True):
                 st.session_state["hitl_approved"] = False
+                st.session_state.pop("hitl_query", None)
                 st.session_state["hitl_state"] = None
                 st.session_state["messages"].append({
                     "role": "assistant",

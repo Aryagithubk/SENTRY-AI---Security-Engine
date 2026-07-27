@@ -1,145 +1,139 @@
-from typing import List, Dict, Any, Optional
+import re
+from collections import Counter
+from typing import Any, Dict, List, Optional
+
 from backend.services.api_client import SOCApiClient
+
 
 client = SOCApiClient()
 
+
 class ThreatCorrelationService:
-    """
-    Phase 2 AI Threat Hunting & Multi-Vector Event Correlation Engine.
-    Correlates telemetry across Identity, Endpoints, SIEM Alerts, Cloud, and Threat Intel.
-    Generates explainable attack chain graphs and composite risk scores.
-    """
+    """Evidence-driven correlation over the configured SOC telemetry sources."""
+
+    SEVERITY_WEIGHTS = {"CRITICAL": 30, "HIGH": 18, "MEDIUM": 8, "LOW": 3}
+
+    @staticmethod
+    def _entities(query: str) -> Dict[str, Optional[str]]:
+        email = re.search(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b", query)
+        host = re.search(r"\b(?:WS|LAPTOP|SRV|HOST|DEV|PROD|PC|MAC|WIN)-[A-Za-z0-9-]+\b", query, re.I)
+        ip = re.search(r"\b(?:\d{1,3}\.){3}\d{1,3}\b", query)
+        return {
+            "email": email.group(0) if email else None,
+            "host": host.group(0) if host else None,
+            "ip": ip.group(0) if ip else None,
+        }
 
     @classmethod
     def correlate_investigation(
-        cls, 
-        target_user: Optional[str] = None, 
-        target_host: Optional[str] = None, 
-        incident_id: Optional[str] = None
+        cls,
+        query: str = "",
+        target_user: Optional[str] = None,
+        target_host: Optional[str] = None,
+        incident_id: Optional[str] = None,
     ) -> Dict[str, Any]:
+        """Resolve the requested scope and correlate only matching evidence.
+
+        A global threat-hunt (no entity in the query) uses all current alerts.
+        An explicit but unknown user or host returns no evidence instead of
+        silently substituting a demo identity or endpoint.
         """
-        Correlate multi-source telemetry for a given target context.
-        Returns correlated findings, attack chain nodes, risk score, and explainability cards.
-        """
+        entities = cls._entities(query)
+        requested_user = target_user or entities["email"]
+        requested_host = target_host or entities["host"] or entities["ip"]
+
+        user_matches = client.get_users(requested_user) if requested_user else []
+        host_matches = client.get_endpoints(requested_host) if requested_host else []
+        user = user_matches[0] if user_matches else None
+        host = host_matches[0] if host_matches else None
+
+        # Resolve the other entity from the requested evidence, never from a
+        # fixed first record in mock data.
+        if user is None and host and host.get("assigned_user"):
+            users = client.get_users(host["assigned_user"])
+            user = users[0] if users else None
+        if host is None and user:
+            hosts = client.get_endpoints(user.get("email"))
+            host = hosts[0] if hosts else None
+
+        explicit_scope_missing = (requested_user and user is None) or (requested_host and host is None)
         all_alerts = client.get_alerts()
-        all_users = client.get_users()
-        all_endpoints = client.get_endpoints()
+        if explicit_scope_missing:
+            matched_alerts: List[Dict[str, Any]] = []
+        elif user or host:
+            matched_alerts = [
+                alert for alert in all_alerts
+                if (user and alert.get("user_email", "").lower() == user.get("email", "").lower())
+                or (host and alert.get("hostname", "").lower() == host.get("hostname", "").lower())
+            ]
+        else:
+            # A hunt with no entity is intentionally an environment-wide scope.
+            matched_alerts = all_alerts
 
-        # 1. Target Resolution
-        user = None
-        if target_user:
-            users_found = client.get_users(target_user)
-            if users_found:
-                user = users_found[0]
-        if not user:
-            user = all_users[0] if all_users else {"name": "John Doe", "email": "johndoe@securetech.com", "risk_score": 88}
-
-        host = None
-        if target_host:
-            hosts_found = client.get_endpoints(target_host)
-            if hosts_found:
-                host = hosts_found[0]
-        if not host:
-            hosts_found = client.get_endpoints(user.get("email"))
-            host = hosts_found[0] if hosts_found else (all_endpoints[0] if all_endpoints else {"hostname": "WS-FINANCE-04", "ip_address": "10.0.4.45", "health_status": "COMPROMISED"})
-
-        # Fetch matching SIEM alerts
-        matched_alerts = [
-            a for a in all_alerts 
-            if a.get("user_email") == user.get("email") or a.get("hostname") == host.get("hostname")
-        ]
         if not matched_alerts:
-            matched_alerts = all_alerts[:5]
-
-        # Extract Threat Intel C2 IP
-        c2_ip = "185.220.101.5"
-        for a in matched_alerts:
-            if a.get("source_ip") and a.get("source_ip") != "N/A":
-                c2_ip = a.get("source_ip")
-                break
-        threat_intel = client.lookup_ip_or_hash(c2_ip) or {"indicator": c2_ip, "threat_actor": "APT29 / Midnight Blizzard", "confidence_score": 98}
-
-        # 2. Compute Composite Risk Score (0-100) & Confidence
-        base_user_risk = user.get("risk_score", 50)
-        alert_severity_weight = sum(30 if a.get("severity") == "CRITICAL" else 15 for a in matched_alerts)
-        host_penalty = 30 if host.get("health_status") == "COMPROMISED" else 10
-        composite_risk = min(int((base_user_risk * 0.3) + alert_severity_weight + host_penalty), 98)
-        
-        confidence_pct = min(85 + len(matched_alerts) * 2, 98)
-
-        risk_level = "CRITICAL" if composite_risk >= 85 else ("HIGH" if composite_risk >= 70 else "MEDIUM")
-
-        # 3. Construct Graphical Attack Chain Nodes
-        attack_chain_nodes = [
-            {
-                "id": "node_1",
-                "type": "IP_INDICATOR",
-                "title": f"C2 Threat IP ({c2_ip})",
-                "description": f"Known C2 Infrastructure attributed to {threat_intel.get('threat_actor', 'APT29')}",
-                "status": "MALICIOUS",
-                "icon": "🌐"
-            },
-            {
-                "id": "node_2",
-                "type": "IDENTITY_BREACH",
-                "title": f"Account Compromise ({user.get('email')})",
-                "description": "Impossible Travel & Brute Force authentication anomalies",
-                "status": "FLAGGED",
-                "icon": "👤"
-            },
-            {
-                "id": "node_3",
-                "type": "ENDPOINT_COMPROMISE",
-                "title": f"Device Infection ({host.get('hostname')})",
-                "description": f"Health: {host.get('health_status')} | Malicious PowerShell payload execution",
-                "status": "COMPROMISED",
-                "icon": "💻"
-            },
-            {
-                "id": "node_4",
-                "type": "C2_BEACONING",
-                "title": "Cobalt Strike C2 Beaconing",
-                "description": "Outbound TCP 443 encrypted C2 traffic to foreign gateway",
-                "status": "ACTIVE",
-                "icon": "⚠️"
-            },
-            {
-                "id": "node_5",
-                "type": "RANSOMWARE_IMPACT",
-                "title": "File Encryption & Impair Defenses",
-                "description": "Mass document file encryption (.locked) & AWS security group tampering",
-                "status": "CRITICAL",
-                "icon": "🚨"
+            return {
+                "no_evidence": True,
+                "scope": {"requested_user": requested_user, "requested_host": requested_host},
+                "target_user": user,
+                "target_host": host,
+                "matched_alerts": [],
+                "timeline": [],
+                "attack_chain": [],
+                "explainability": {"reasons": ["No matching telemetry was found for the requested scope."], "recommended_next_step": "Verify the target identifier or broaden the investigation scope."},
             }
-        ]
 
-        # 4. Generate Chronological Event Timeline
-        timeline = []
-        for a in matched_alerts:
-            timeline.append({
-                "timestamp": a.get("timestamp"),
-                "event": a.get("title"),
-                "severity": a.get("severity"),
-                "description": a.get("description"),
-                "ttp": a.get("mitre_ttp"),
-                "source": a.get("source")
-            })
-        timeline.sort(key=lambda x: x.get("timestamp", ""))
+        indicators = []
+        for alert in matched_alerts:
+            indicator = alert.get("source_ip")
+            if indicator and indicator != "N/A":
+                intel = client.lookup_ip_or_hash(indicator)
+                if intel:
+                    indicators.append(intel)
+        threat_intel = max(indicators, key=lambda item: item.get("confidence_score", 0), default=None)
 
-        # 5. "Why Am I Seeing This?" Explainability Justification
-        explainability = {
-            "title": f"Why is this investigation rated {risk_level} Risk ({composite_risk}/100)?",
-            "confidence_score": f"{confidence_pct}%",
-            "reasons": [
-                f"{len(matched_alerts)} correlated security alerts detected across Identity and Endpoint vectors.",
-                f"Target user '{user.get('name')}' ({user.get('email')}) has a elevated risk score of {user.get('risk_score')}/100.",
-                f"Host '{host.get('hostname')}' status is {host.get('health_status')} with detected ransomware execution.",
-                f"Source IP '{c2_ip}' is positively identified by Threat Intel as {threat_intel.get('threat_actor')} C2 infrastructure."
-            ],
-            "recommended_next_step": "Isolate host WS-FINANCE-04, revoke OAuth session tokens, and trigger CISO Executive Escalation."
-        }
+        severity_score = sum(cls.SEVERITY_WEIGHTS.get(alert.get("severity", "").upper(), 3) for alert in matched_alerts)
+        user_risk = int(user.get("risk_score", 0)) if user else 0
+        host_penalty = 20 if host and host.get("health_status", "").upper() == "COMPROMISED" else 0
+        composite_risk = min(100, round(severity_score + (user_risk * 0.25) + host_penalty))
+        risk_level = "CRITICAL" if composite_risk >= 85 else "HIGH" if composite_risk >= 60 else "MEDIUM" if composite_risk >= 30 else "LOW"
+        confidence_pct = min(98, 55 + (len(matched_alerts) * 7) + (15 if user else 0) + (15 if host else 0) + (10 if threat_intel else 0))
+
+        timeline = sorted(({
+            "timestamp": alert.get("timestamp"), "event": alert.get("title"), "severity": alert.get("severity"),
+            "description": alert.get("description"), "ttp": alert.get("mitre_ttp"), "source": alert.get("source"),
+        } for alert in matched_alerts), key=lambda event: event.get("timestamp") or "")
+
+        attack_chain = []
+        if user:
+            attack_chain.append({"id": "identity", "type": "IDENTITY", "title": f"Identity: {user.get('email')}", "description": f"Risk score: {user.get('risk_score', 'N/A')}/100", "status": user.get("account_status", "OBSERVED")})
+        if host:
+            attack_chain.append({"id": "endpoint", "type": "ENDPOINT", "title": f"Endpoint: {host.get('hostname')}", "description": f"Health: {host.get('health_status', 'UNKNOWN')}", "status": host.get("health_status", "OBSERVED")})
+        if threat_intel:
+            attack_chain.append({"id": "indicator", "type": "THREAT_INTEL", "title": f"Indicator: {threat_intel.get('indicator')}", "description": f"Attribution: {threat_intel.get('threat_actor', 'Unknown')}", "status": "MATCHED"})
+        for index, alert in enumerate(matched_alerts, start=1):
+            attack_chain.append({"id": f"alert-{index}", "type": "ALERT", "title": alert.get("title", "Security alert"), "description": alert.get("description", ""), "status": alert.get("severity", "OBSERVED")})
+
+        sources = Counter(alert.get("source", "Unknown") for alert in matched_alerts)
+        recommendations = []
+        if host and host.get("health_status", "").upper() == "COMPROMISED":
+            recommendations.append(f"Review containment options for `{host.get('hostname')}` with an authorized analyst.")
+        if user and user.get("risk_score", 0) >= 70:
+            recommendations.append(f"Review active sessions and authentication activity for `{user.get('email')}`.")
+        if threat_intel:
+            recommendations.append(f"Validate network activity involving `{threat_intel.get('indicator')}` before blocking or escalating.")
+        if not recommendations:
+            recommendations.append("Continue triage by validating the correlated alerts and their timestamps.")
+
+        reasons = [f"{len(matched_alerts)} matching alert(s) were correlated across {len(sources)} telemetry source(s)."]
+        if user:
+            reasons.append(f"Identity evidence belongs to `{user.get('email')}` with risk score `{user.get('risk_score', 'N/A')}/100`.")
+        if host:
+            reasons.append(f"Endpoint evidence belongs to `{host.get('hostname')}` with health `{host.get('health_status', 'UNKNOWN')}`.")
+        if threat_intel:
+            reasons.append(f"Threat intelligence matched `{threat_intel.get('indicator')}` to `{threat_intel.get('threat_actor', 'Unknown')}`.")
 
         return {
+            "scope": {"requested_user": requested_user, "requested_host": requested_host, "incident_id": incident_id},
             "target_user": user,
             "target_host": host,
             "threat_intel": threat_intel,
@@ -147,7 +141,7 @@ class ThreatCorrelationService:
             "composite_risk": composite_risk,
             "confidence_pct": confidence_pct,
             "risk_level": risk_level,
-            "attack_chain": attack_chain_nodes,
+            "attack_chain": attack_chain,
             "timeline": timeline,
-            "explainability": explainability
+            "explainability": {"title": f"Evidence-based risk assessment: {risk_level} ({composite_risk}/100)", "confidence_score": f"{confidence_pct}%", "reasons": reasons, "recommended_next_step": " ".join(recommendations)},
         }

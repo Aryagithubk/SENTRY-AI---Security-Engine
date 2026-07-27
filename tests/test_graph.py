@@ -37,3 +37,15 @@ def test_graph_correlation_flow():
     res = graph.process_query("Correlate malware and suspicious network activity for WS-FINANCE-04", auth_context=l2_auth)
     assert res["status"] == "SUCCESS"
     assert "Threat Correlation Agent" in res["target_agent"]
+    assert "Multi-Vector Threat Correlation" in res["response"]
+    assert all(step["agent"] != "Reporting Agent" for step in res["execution_trace"])
+
+def test_graph_correlation_rbac_denial_is_terminal():
+    graph = SecureOpsGraph(provider="mock")
+    l1_auth = {"username": "analyst_l1", "role": "L1"}
+
+    res = graph.process_query("Perform threat hunting for user johndoe@securetech.com", auth_context=l1_auth)
+
+    assert res["status"] == "SUCCESS"
+    assert "Permission Denied" in res["response"]
+    assert all(step["agent"] not in {"Risk Findings Node", "Reporting Agent"} for step in res["execution_trace"])

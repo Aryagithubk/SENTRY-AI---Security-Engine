@@ -6,21 +6,16 @@ class AlertAgent:
     """Specialized agent for searching, analyzing, and triaging SIEM security alerts."""
 
     def execute(self, query: str) -> Dict[str, Any]:
-        # Extract potential severity filter or keywords
-        severity = None
-        for s in ["CRITICAL", "HIGH", "MEDIUM", "LOW"]:
-            if s.lower() in query.lower():
-                severity = s
-                break
-
-        alerts = search_alert(query=query, severity=severity)
+        # The repository resolves severity and entity constraints from the
+        # current SQLite values, including minor spelling errors.
+        alerts = search_alert(query=query)
         
         if not alerts:
             return {
                 "agent": "Alert Agent",
                 "response": f"🔍 No security alerts matching query `{query}` were found in the SIEM database.",
                 "data": [],
-                "tool_calls": [{"tool": "search_alert", "query": query, "severity": severity, "results_count": 0}]
+                "tool_calls": [{"tool": "search_alert", "query": query, "results_count": 0}]
             }
 
         summary_parts = [f"Found **{len(alerts)}** matching security alert(s):\n"]
@@ -31,5 +26,5 @@ class AlertAgent:
             "agent": "Alert Agent",
             "response": "\n".join(summary_parts),
             "data": alerts,
-            "tool_calls": [{"tool": "search_alert", "query": query, "severity": severity, "results_count": len(alerts)}]
+            "tool_calls": [{"tool": "search_alert", "query": query, "results_count": len(alerts)}]
         }
