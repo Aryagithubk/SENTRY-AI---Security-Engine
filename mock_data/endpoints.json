@@ -1,0 +1,65 @@
+[
+  {
+    "endpoint_id": "EP-301",
+    "hostname": "WS-FINANCE-04",
+    "ip_address": "10.0.4.45",
+    "mac_address": "00:1B:44:11:3A:B7",
+    "os": "Windows 11 Enterprise 23H2",
+    "assigned_user": "sarah.c@securetech.com",
+    "agent_status": "ONLINE",
+    "edr_version": "7.9.102",
+    "health_status": "COMPROMISED",
+    "malware_detected": true,
+    "detected_malware": [
+      {
+        "threat_name": "Ransomware.LockBit.v3",
+        "file_path": "C:\\Users\\sarah.c\\AppData\\Local\\Temp\\payload.exe",
+        "hash_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "action_taken": "QUARANTINE_FAILED"
+      }
+    ],
+    "last_policy_sync": "2026-07-25T11:00:00Z"
+  },
+  {
+    "endpoint_id": "EP-302",
+    "hostname": "LAPTOP-SALES-12",
+    "ip_address": "192.168.1.105",
+    "mac_address": "00:1B:44:22:8C:F1",
+    "os": "macOS Sonoma 14.5",
+    "assigned_user": "johndoe@securetech.com",
+    "agent_status": "ONLINE",
+    "edr_version": "7.9.102",
+    "health_status": "WARNING",
+    "malware_detected": false,
+    "detected_malware": [],
+    "last_policy_sync": "2026-07-25T08:00:00Z"
+  },
+  {
+    "endpoint_id": "EP-303",
+    "hostname": "LAPTOP-DEV-88",
+    "ip_address": "172.16.88.12",
+    "mac_address": "00:1B:44:33:9D:E4",
+    "os": "Ubuntu 22.04 LTS",
+    "assigned_user": "admin.alex@securetech.com",
+    "agent_status": "ONLINE",
+    "edr_version": "7.8.44",
+    "health_status": "HEALTHY",
+    "malware_detected": false,
+    "detected_malware": [],
+    "last_policy_sync": "2026-07-25T02:00:00Z"
+  },
+  {
+    "endpoint_id": "EP-304",
+    "hostname": "SRV-DB-PROD-01",
+    "ip_address": "10.0.1.100",
+    "mac_address": "00:1B:44:99:FF:00",
+    "os": "Red Hat Enterprise Linux 9",
+    "assigned_user": "admin.alex@securetech.com",
+    "agent_status": "ONLINE",
+    "edr_version": "7.9.102",
+    "health_status": "HEALTHY",
+    "malware_detected": false,
+    "detected_malware": [],
+    "last_policy_sync": "2026-07-25T12:00:00Z"
+  }
+]

@@ -1,0 +1,35 @@
+[
+  {
+    "indicator": "185.220.101.5",
+    "type": "IPV4",
+    "threat_actor": "APT29 / Midnight Blizzard",
+    "confidence_score": 98,
+    "risk_level": "CRITICAL",
+    "categories": ["COBALT_STRIKE_C2", "TOR_EXIT_NODE", "BRUTE_FORCE_BOTNET"],
+    "first_seen": "2026-06-10T00:00:00Z",
+    "last_seen": "2026-07-25T08:18:05Z",
+    "description": "Active Cobalt Strike command and control infrastructure associated with targeted credential stuffing and ransomware deployment."
+  },
+  {
+    "indicator": "198.51.100.42",
+    "type": "IPV4",
+    "threat_actor": "Unknown / Suspicious Proxy",
+    "confidence_score": 75,
+    "risk_level": "HIGH",
+    "categories": ["ANONYMOUS_VPN", "CLOUD_PROXY"],
+    "first_seen": "2026-07-01T00:00:00Z",
+    "last_seen": "2026-07-25T12:00:30Z",
+    "description": "Commercial VPN node frequently used to obscure unauthorized cloud infrastructure changes."
+  },
+  {
+    "indicator": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "type": "FILE_HASH_SHA256",
+    "threat_actor": "LockBit Ransomware Gang",
+    "confidence_score": 100,
+    "risk_level": "CRITICAL",
+    "categories": ["RANSOMWARE", "FILE_ENCRYPTR"],
+    "first_seen": "2026-05-15T00:00:00Z",
+    "last_seen": "2026-07-25T09:30:10Z",
+    "description": "LockBit v3 ransomware payload executing double-extortion tactics."
+  }
+]

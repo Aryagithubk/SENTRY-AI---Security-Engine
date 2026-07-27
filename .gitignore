@@ -1,0 +1,162 @@
+# ==============================
+# Python
+# ==============================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# ==============================
+# Virtual Environment
+# ==============================
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# ==============================
+# Environment Variables / Secrets
+# ==============================
+.env
+.env.*
+!.env.example
+
+# API Keys / Credentials
+*.pem
+*.key
+secrets/
+credentials/
+credentials.json
+
+# ==============================
+# IDE / Editors
+# ==============================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ==============================
+# Jupyter Notebook
+# ==============================
+.ipynb_checkpoints/
+
+# ==============================
+# Streamlit
+# ==============================
+.streamlit/secrets.toml
+
+# ==============================
+# LangChain / LangGraph
+# ==============================
+.langchain/
+.langgraph/
+
+# ==============================
+# LangSmith
+# ==============================
+# LangSmith tracing is remote,
+# but ignore any local config/cache
+.langsmith/
+
+# ==============================
+# Vector Databases / Embeddings
+# ==============================
+chroma_db/
+chroma/
+vectorstore/
+vector_store/
+*.faiss
+*.pkl
+
+# ==============================
+# Local Databases
+# ==============================
+*.db
+*.sqlite
+*.sqlite3
+
+# ==============================
+# Logs
+# ==============================
+*.log
+logs/
+
+# ==============================
+# Cache
+# ==============================
+.cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ==============================
+# Build / Distribution
+# ==============================
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# ==============================
+# Coverage
+# ==============================
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# ==============================
+# Testing
+# ==============================
+.pytest_cache/
+
+# ==============================
+# OS Files
+# ==============================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==============================
+# Temporary Files
+# ==============================
+*.tmp
+*.temp
+*.bak
+*.swp
+
+# ==============================
+# Generated Reports / Outputs
+# ==============================
+outputs/
+reports/
+generated_reports/
+
+# ==============================
+# Local Model Files
+# ==============================
+models/
+*.bin
+*.safetensors
+*.gguf
+
+# ==============================
+# Node (if frontend is added later)
+# ==============================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# ==============================
+# Docker
+# ==============================
+.docker/
+
+# ==============================
+# Local IDE / Project Files
+# ==============================
+*.code-workspace

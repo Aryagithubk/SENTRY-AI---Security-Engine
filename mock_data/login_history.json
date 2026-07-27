@@ -1,0 +1,62 @@
+[
+  {
+    "event_id": "LOG-501",
+    "timestamp": "2026-07-25T08:14:00Z",
+    "user_email": "johndoe@securetech.com",
+    "ip_address": "185.220.101.5",
+    "location": "Bucharest, Romania",
+    "status": "FAILURE",
+    "failure_reason": "Invalid Password",
+    "auth_type": "PASSWORD"
+  },
+  {
+    "event_id": "LOG-502",
+    "timestamp": "2026-07-25T08:14:15Z",
+    "user_email": "johndoe@securetech.com",
+    "ip_address": "185.220.101.5",
+    "location": "Bucharest, Romania",
+    "status": "FAILURE",
+    "failure_reason": "Invalid Password",
+    "auth_type": "PASSWORD"
+  },
+  {
+    "event_id": "LOG-503",
+    "timestamp": "2026-07-25T08:18:05Z",
+    "user_email": "johndoe@securetech.com",
+    "ip_address": "185.220.101.5",
+    "location": "Bucharest, Romania",
+    "status": "SUCCESS",
+    "failure_reason": "N/A",
+    "auth_type": "MFA_PROMPT_BYPASS"
+  },
+  {
+    "event_id": "LOG-504",
+    "timestamp": "2026-07-25T08:14:00Z",
+    "user_email": "johndoe@securetech.com",
+    "ip_address": "198.51.100.10",
+    "location": "New York, USA",
+    "status": "SUCCESS",
+    "failure_reason": "N/A",
+    "auth_type": "SAML_SSO"
+  },
+  {
+    "event_id": "LOG-505",
+    "timestamp": "2026-07-25T09:00:00Z",
+    "user_email": "sarah.c@securetech.com",
+    "ip_address": "10.0.4.45",
+    "location": "HQ Office - New York",
+    "status": "SUCCESS",
+    "failure_reason": "N/A",
+    "auth_type": "KERBEROS_DOMAIN"
+  },
+  {
+    "event_id": "LOG-506",
+    "timestamp": "2026-07-25T02:15:00Z",
+    "user_email": "admin.alex@securetech.com",
+    "ip_address": "172.16.88.12",
+    "location": "HQ Office - VPN",
+    "status": "SUCCESS",
+    "failure_reason": "N/A",
+    "auth_type": "HARDWARE_TOKEN_MFA"
+  }
+]

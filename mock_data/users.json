@@ -1,0 +1,50 @@
+[
+  {
+    "user_id": "USR-801",
+    "name": "John Doe",
+    "email": "johndoe@securetech.com",
+    "department": "Sales & Operations",
+    "role": "Account Executive",
+    "risk_score": 88,
+    "account_status": "FLAGGED",
+    "mfa_enabled": true,
+    "assigned_device": "LAPTOP-SALES-12",
+    "last_active": "2026-07-25T08:18:05Z"
+  },
+  {
+    "user_id": "USR-802",
+    "name": "Sarah Connor",
+    "email": "sarah.c@securetech.com",
+    "department": "Finance",
+    "role": "Financial Analyst",
+    "risk_score": 95,
+    "account_status": "SUSPENDED_PENDING_INVESTIGATION",
+    "mfa_enabled": true,
+    "assigned_device": "WS-FINANCE-04",
+    "last_active": "2026-07-25T11:05:40Z"
+  },
+  {
+    "user_id": "USR-803",
+    "name": "Alex Mercer",
+    "email": "admin.alex@securetech.com",
+    "department": "Infrastructure & Systems",
+    "role": "Senior System Administrator",
+    "risk_score": 42,
+    "account_status": "ACTIVE",
+    "mfa_enabled": true,
+    "assigned_device": "LAPTOP-DEV-88",
+    "last_active": "2026-07-25T02:15:00Z"
+  },
+  {
+    "user_id": "USR-804",
+    "name": "Cloud Admin Team",
+    "email": "cloud.admin@securetech.com",
+    "department": "Cloud Engineering",
+    "role": "Cloud Infrastructure Lead",
+    "risk_score": 65,
+    "account_status": "ACTIVE",
+    "mfa_enabled": true,
+    "assigned_device": "WS-CLOUD-01",
+    "last_active": "2026-07-25T12:00:30Z"
+  }
+]

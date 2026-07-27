@@ -1,0 +1,1108 @@
+[
+  {
+    "incident_id": "INC-2026-001",
+    "created_at": "2026-07-25T10:00:00Z",
+    "title": "Active Ransomware Attack on WS-FINANCE-04",
+    "severity": "CRITICAL",
+    "status": "IN_PROGRESS",
+    "assigned_analyst": "SOC Lead Analyst",
+    "affected_user": "sarah.c@securetech.com",
+    "affected_host": "WS-FINANCE-04",
+    "related_alerts": [
+      "ALT-1003",
+      "ALT-1004",
+      "ALT-1005"
+    ],
+    "summary": "Multi-stage attack involving malicious PowerShell payload download, C2 beaconing to 185.220.101.5, and active file encryption on finance workstation.",
+    "recommended_actions": [
+      "Isolate WS-FINANCE-04 from corporate network",
+      "Revoke Azure AD / IAM session tokens for sarah.c@securetech.com",
+      "Block IP 185.220.101.5 on perimeter firewalls"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-002",
+    "created_at": "2026-07-25T08:30:00Z",
+    "title": "Impossible Travel & Credential Compromise",
+    "severity": "HIGH",
+    "status": "OPEN",
+    "assigned_analyst": "Unassigned",
+    "affected_user": "johndoe@securetech.com",
+    "affected_host": "LAPTOP-SALES-12",
+    "related_alerts": [
+      "ALT-1001",
+      "ALT-1002"
+    ],
+    "summary": "Brute force attempts followed by successful login from foreign IP 185.220.101.5 within 4 minutes of US login.",
+    "recommended_actions": [
+      "Force password reset for johndoe@securetech.com",
+      "Enforce MFA re-enrollment",
+      "Revoke active OAuth tokens"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-003",
+    "created_at": "2026-07-25T17:35:00Z",
+    "title": "Critical Threat Escalation: Multi-Stage Ransomware Attack",
+    "severity": "CRITICAL",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "sarah.c@securetech.com",
+    "affected_host": "WS-FINANCE-04",
+    "related_alerts": [
+      "ALT-1003",
+      "ALT-1004",
+      "ALT-1005"
+    ],
+    "summary": "Confirmed by analyst: Multi-stage ransomware attack correlated across endpoints and firewall logs.",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-004",
+    "created_at": "2026-07-25T17:35:00Z",
+    "title": "Test Incident",
+    "severity": "HIGH",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "test@securetech.com",
+    "affected_host": "WS-TEST-01",
+    "related_alerts": [
+      "ALT-1001"
+    ],
+    "summary": "Test incident creation",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-005",
+    "created_at": "2026-07-25T17:35:00Z",
+    "title": "Critical Threat Escalation: Multi-Stage Ransomware Attack",
+    "severity": "CRITICAL",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "sarah.c@securetech.com",
+    "affected_host": "WS-FINANCE-04",
+    "related_alerts": [
+      "ALT-1003",
+      "ALT-1004",
+      "ALT-1005"
+    ],
+    "summary": "Confirmed by analyst: Multi-stage ransomware attack correlated across endpoints and firewall logs.",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-006",
+    "created_at": "2026-07-25T17:35:00Z",
+    "title": "Test Incident",
+    "severity": "HIGH",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "test@securetech.com",
+    "affected_host": "WS-TEST-01",
+    "related_alerts": [
+      "ALT-1001"
+    ],
+    "summary": "Test incident creation",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-007",
+    "created_at": "2026-07-25T17:35:00Z",
+    "title": "Critical Threat Escalation: Multi-Stage Ransomware Attack",
+    "severity": "CRITICAL",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "sarah.c@securetech.com",
+    "affected_host": "WS-FINANCE-04",
+    "related_alerts": [
+      "ALT-1003",
+      "ALT-1004",
+      "ALT-1005"
+    ],
+    "summary": "Confirmed by analyst: Multi-stage ransomware attack correlated across endpoints and firewall logs.",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-008",
+    "created_at": "2026-07-25T17:35:00Z",
+    "title": "Critical Threat Escalation: Multi-Stage Ransomware Attack",
+    "severity": "CRITICAL",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "sarah.c@securetech.com",
+    "affected_host": "WS-FINANCE-04",
+    "related_alerts": [
+      "ALT-1003",
+      "ALT-1004",
+      "ALT-1005"
+    ],
+    "summary": "Confirmed by analyst: Multi-stage ransomware attack correlated across endpoints and firewall logs.",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-009",
+    "created_at": "2026-07-25T17:35:00Z",
+    "title": "Critical Threat Escalation: Multi-Stage Ransomware Attack",
+    "severity": "CRITICAL",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "sarah.c@securetech.com",
+    "affected_host": "WS-FINANCE-04",
+    "related_alerts": [
+      "ALT-1003",
+      "ALT-1004",
+      "ALT-1005"
+    ],
+    "summary": "Confirmed by analyst: Multi-stage ransomware attack correlated across endpoints and firewall logs.",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-010",
+    "created_at": "2026-07-25T17:35:00Z",
+    "title": "Test Incident",
+    "severity": "HIGH",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "test@securetech.com",
+    "affected_host": "WS-TEST-01",
+    "related_alerts": [
+      "ALT-1001"
+    ],
+    "summary": "Test incident creation",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-011",
+    "created_at": "2026-07-25T17:35:00Z",
+    "title": "Critical Threat Escalation: Multi-Stage Ransomware Attack",
+    "severity": "CRITICAL",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "sarah.c@securetech.com",
+    "affected_host": "WS-FINANCE-04",
+    "related_alerts": [
+      "ALT-1003",
+      "ALT-1004",
+      "ALT-1005"
+    ],
+    "summary": "Confirmed by analyst: Multi-stage ransomware attack correlated across endpoints and firewall logs.",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-012",
+    "created_at": "2026-07-25T17:35:00Z",
+    "title": "Test Incident",
+    "severity": "HIGH",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "test@securetech.com",
+    "affected_host": "WS-TEST-01",
+    "related_alerts": [
+      "ALT-1001"
+    ],
+    "summary": "Test incident creation",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-013",
+    "created_at": "2026-07-25T17:35:00Z",
+    "title": "Critical Threat Escalation: Multi-Stage Ransomware Attack",
+    "severity": "CRITICAL",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "sarah.c@securetech.com",
+    "affected_host": "WS-FINANCE-04",
+    "related_alerts": [
+      "ALT-1003",
+      "ALT-1004",
+      "ALT-1005"
+    ],
+    "summary": "Confirmed by analyst: Multi-stage ransomware attack correlated across endpoints and firewall logs.",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-014",
+    "created_at": "2026-07-25T17:35:00Z",
+    "title": "Test Incident",
+    "severity": "HIGH",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "test@securetech.com",
+    "affected_host": "WS-TEST-01",
+    "related_alerts": [
+      "ALT-1001"
+    ],
+    "summary": "Test incident creation",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-015",
+    "created_at": "2026-07-25T17:35:00Z",
+    "title": "Critical Threat Escalation: Multi-Stage Ransomware Attack",
+    "severity": "CRITICAL",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "sarah.c@securetech.com",
+    "affected_host": "WS-FINANCE-04",
+    "related_alerts": [
+      "ALT-1003",
+      "ALT-1004",
+      "ALT-1005"
+    ],
+    "summary": "Confirmed by analyst: Multi-stage ransomware attack correlated across endpoints and firewall logs.",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-016",
+    "created_at": "2026-07-25T17:35:00Z",
+    "title": "Critical Threat Escalation: Multi-Stage Ransomware Attack",
+    "severity": "CRITICAL",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "sarah.c@securetech.com",
+    "affected_host": "WS-FINANCE-04",
+    "related_alerts": [
+      "ALT-1003",
+      "ALT-1004",
+      "ALT-1005"
+    ],
+    "summary": "Confirmed by analyst: Multi-stage ransomware attack correlated across endpoints and firewall logs.",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-017",
+    "created_at": "2026-07-25T17:35:00Z",
+    "title": "Test Incident",
+    "severity": "HIGH",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "test@securetech.com",
+    "affected_host": "WS-TEST-01",
+    "related_alerts": [
+      "ALT-1001"
+    ],
+    "summary": "Test incident creation",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-018",
+    "created_at": "2026-07-25T17:35:00Z",
+    "title": "Critical Threat Escalation: Multi-Stage Ransomware Attack",
+    "severity": "CRITICAL",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "sarah.c@securetech.com",
+    "affected_host": "WS-FINANCE-04",
+    "related_alerts": [
+      "ALT-1003",
+      "ALT-1004",
+      "ALT-1005"
+    ],
+    "summary": "Confirmed by analyst: Multi-stage ransomware attack correlated across endpoints and firewall logs.",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-019",
+    "created_at": "2026-07-25T17:35:00Z",
+    "title": "Test Incident",
+    "severity": "HIGH",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "test@securetech.com",
+    "affected_host": "WS-TEST-01",
+    "related_alerts": [
+      "ALT-1001"
+    ],
+    "summary": "Test incident creation",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-020",
+    "created_at": "2026-07-25T17:18:00Z",
+    "title": "Critical Threat Escalation: Multi-Stage Ransomware Attack",
+    "severity": "CRITICAL",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "sarah.c@securetech.com",
+    "affected_host": "WS-FINANCE-04",
+    "related_alerts": [
+      "ALT-1003",
+      "ALT-1004",
+      "ALT-1005"
+    ],
+    "summary": "Confirmed by analyst: Multi-stage ransomware attack correlated across endpoints and firewall logs.",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-021",
+    "created_at": "2026-07-25T17:18:00Z",
+    "title": "Test Incident",
+    "severity": "HIGH",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "test@securetech.com",
+    "affected_host": "WS-TEST-01",
+    "related_alerts": [
+      "ALT-1001"
+    ],
+    "summary": "Test incident creation",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-022",
+    "created_at": "2026-07-25T17:18:31Z",
+    "title": "Critical Threat Escalation: Multi-Stage Ransomware Attack",
+    "severity": "CRITICAL",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "sarah.c@securetech.com",
+    "affected_host": "WS-FINANCE-04",
+    "related_alerts": [
+      "ALT-1003",
+      "ALT-1004",
+      "ALT-1005"
+    ],
+    "summary": "Confirmed by analyst: Multi-stage ransomware attack correlated across endpoints and firewall logs.",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-023",
+    "created_at": "2026-07-25T17:18:31Z",
+    "title": "Test Incident",
+    "severity": "HIGH",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "test@securetech.com",
+    "affected_host": "WS-TEST-01",
+    "related_alerts": [
+      "ALT-1001"
+    ],
+    "summary": "Test incident creation",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-024",
+    "created_at": "2026-07-25T17:32:34Z",
+    "title": "Critical Threat Escalation: Multi-Stage Ransomware Attack",
+    "severity": "CRITICAL",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "sarah.c@securetech.com",
+    "affected_host": "WS-FINANCE-04",
+    "related_alerts": [
+      "ALT-1003",
+      "ALT-1004",
+      "ALT-1005"
+    ],
+    "summary": "Confirmed by analyst: Multi-stage ransomware attack correlated across endpoints and firewall logs.",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-025",
+    "created_at": "2026-07-25T17:32:34Z",
+    "title": "Test Incident",
+    "severity": "HIGH",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "test@securetech.com",
+    "affected_host": "WS-TEST-01",
+    "related_alerts": [
+      "ALT-1001"
+    ],
+    "summary": "Test incident creation",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-026",
+    "created_at": "2026-07-25T17:52:48Z",
+    "title": "Critical Threat Escalation: Multi-Stage Ransomware Attack",
+    "severity": "CRITICAL",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "sarah.c@securetech.com",
+    "affected_host": "WS-FINANCE-04",
+    "related_alerts": [
+      "ALT-1003",
+      "ALT-1004",
+      "ALT-1005"
+    ],
+    "summary": "Confirmed by analyst: Multi-stage ransomware attack correlated across endpoints and firewall logs.",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-027",
+    "created_at": "2026-07-25T17:52:48Z",
+    "title": "Test Incident",
+    "severity": "HIGH",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "test@securetech.com",
+    "affected_host": "WS-TEST-01",
+    "related_alerts": [
+      "ALT-1001"
+    ],
+    "summary": "Test incident creation",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-028",
+    "created_at": "2026-07-25T18:36:11Z",
+    "title": "Critical Threat Escalation: Multi-Stage Ransomware Attack",
+    "severity": "CRITICAL",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "sarah.c@securetech.com",
+    "affected_host": "WS-FINANCE-04",
+    "related_alerts": [
+      "ALT-1003",
+      "ALT-1004",
+      "ALT-1005"
+    ],
+    "summary": "Confirmed by analyst: Multi-stage ransomware attack correlated across endpoints and firewall logs.",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-029",
+    "created_at": "2026-07-25T18:36:11Z",
+    "title": "Test Incident",
+    "severity": "HIGH",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "test@securetech.com",
+    "affected_host": "WS-TEST-01",
+    "related_alerts": [
+      "ALT-1001"
+    ],
+    "summary": "Test incident creation",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-030",
+    "created_at": "2026-07-26T10:50:45Z",
+    "title": "Critical Threat Escalation: Multi-Stage Ransomware Attack",
+    "severity": "CRITICAL",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "sarah.c@securetech.com",
+    "affected_host": "WS-FINANCE-04",
+    "related_alerts": [
+      "ALT-1003",
+      "ALT-1004",
+      "ALT-1005"
+    ],
+    "summary": "Confirmed by analyst: Multi-stage ransomware attack correlated across endpoints and firewall logs.",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-031",
+    "created_at": "2026-07-26T10:50:45Z",
+    "title": "Test Incident",
+    "severity": "HIGH",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "test@securetech.com",
+    "affected_host": "WS-TEST-01",
+    "related_alerts": [
+      "ALT-1001"
+    ],
+    "summary": "Test incident creation",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-032",
+    "created_at": "2026-07-26T10:51:22Z",
+    "title": "Critical Threat Escalation: Multi-Stage Ransomware Attack",
+    "severity": "CRITICAL",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "sarah.c@securetech.com",
+    "affected_host": "WS-FINANCE-04",
+    "related_alerts": [
+      "ALT-1003",
+      "ALT-1004",
+      "ALT-1005"
+    ],
+    "summary": "Confirmed by analyst: Multi-stage ransomware attack correlated across endpoints and firewall logs.",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-033",
+    "created_at": "2026-07-26T10:51:22Z",
+    "title": "Test Incident",
+    "severity": "HIGH",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "test@securetech.com",
+    "affected_host": "WS-TEST-01",
+    "related_alerts": [
+      "ALT-1001"
+    ],
+    "summary": "Test incident creation",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-034",
+    "created_at": "2026-07-26T11:01:34Z",
+    "title": "Critical Threat Escalation: Multi-Stage Ransomware Attack",
+    "severity": "CRITICAL",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "sarah.c@securetech.com",
+    "affected_host": "WS-FINANCE-04",
+    "related_alerts": [
+      "ALT-1003",
+      "ALT-1004",
+      "ALT-1005"
+    ],
+    "summary": "Confirmed by analyst: Multi-stage ransomware attack correlated across endpoints and firewall logs.",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-035",
+    "created_at": "2026-07-26T11:01:34Z",
+    "title": "Test Incident",
+    "severity": "HIGH",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "test@securetech.com",
+    "affected_host": "WS-TEST-01",
+    "related_alerts": [
+      "ALT-1001"
+    ],
+    "summary": "Test incident creation",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-036",
+    "created_at": "2026-07-26T11:15:49Z",
+    "title": "Critical Threat Escalation: Multi-Stage Ransomware Attack",
+    "severity": "CRITICAL",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "sarah.c@securetech.com",
+    "affected_host": "WS-FINANCE-04",
+    "related_alerts": [
+      "ALT-1003",
+      "ALT-1004",
+      "ALT-1005"
+    ],
+    "summary": "Confirmed by analyst: Multi-stage ransomware attack correlated across endpoints and firewall logs.",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-037",
+    "created_at": "2026-07-26T12:10:30Z",
+    "title": "Critical Threat Escalation: Multi-Stage Ransomware Attack",
+    "severity": "CRITICAL",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "sarah.c@securetech.com",
+    "affected_host": "WS-FINANCE-04",
+    "related_alerts": [
+      "ALT-1003",
+      "ALT-1004",
+      "ALT-1005"
+    ],
+    "summary": "Confirmed by analyst: Multi-stage ransomware attack correlated across endpoints and firewall logs.",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-038",
+    "created_at": "2026-07-26T12:10:30Z",
+    "title": "Test Incident",
+    "severity": "HIGH",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "test@securetech.com",
+    "affected_host": "WS-TEST-01",
+    "related_alerts": [
+      "ALT-1001"
+    ],
+    "summary": "Test incident creation",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-039",
+    "created_at": "2026-07-26T12:18:24Z",
+    "title": "Critical Threat Escalation: Multi-Stage Ransomware Attack",
+    "severity": "CRITICAL",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "sarah.c@securetech.com",
+    "affected_host": "WS-FINANCE-04",
+    "related_alerts": [
+      "ALT-1003",
+      "ALT-1004",
+      "ALT-1005"
+    ],
+    "summary": "Confirmed by analyst: Multi-stage ransomware attack correlated across endpoints and firewall logs.",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-040",
+    "created_at": "2026-07-26T12:18:24Z",
+    "title": "Test Incident",
+    "severity": "HIGH",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "test@securetech.com",
+    "affected_host": "WS-TEST-01",
+    "related_alerts": [
+      "ALT-1001"
+    ],
+    "summary": "Test incident creation",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-041",
+    "created_at": "2026-07-26T12:25:31Z",
+    "title": "Critical Threat Escalation: Multi-Stage Ransomware Attack",
+    "severity": "CRITICAL",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "sarah.c@securetech.com",
+    "affected_host": "WS-FINANCE-04",
+    "related_alerts": [
+      "ALT-1003",
+      "ALT-1004",
+      "ALT-1005"
+    ],
+    "summary": "Confirmed by analyst: Multi-stage ransomware attack correlated across endpoints and firewall logs.",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-042",
+    "created_at": "2026-07-26T12:25:31Z",
+    "title": "Test Incident",
+    "severity": "HIGH",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "test@securetech.com",
+    "affected_host": "WS-TEST-01",
+    "related_alerts": [
+      "ALT-1001"
+    ],
+    "summary": "Test incident creation",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-043",
+    "created_at": "2026-07-26T12:32:31Z",
+    "title": "Critical Threat Escalation: Multi-Stage Ransomware Attack",
+    "severity": "CRITICAL",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "sarah.c@securetech.com",
+    "affected_host": "WS-FINANCE-04",
+    "related_alerts": [
+      "ALT-1003",
+      "ALT-1004",
+      "ALT-1005"
+    ],
+    "summary": "Confirmed by analyst: Multi-stage ransomware attack correlated across endpoints and firewall logs.",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-044",
+    "created_at": "2026-07-26T12:32:31Z",
+    "title": "Test Incident",
+    "severity": "HIGH",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "test@securetech.com",
+    "affected_host": "WS-TEST-01",
+    "related_alerts": [
+      "ALT-1001"
+    ],
+    "summary": "Test incident creation",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-045",
+    "created_at": "2026-07-27T17:15:00Z",
+    "title": "Test Incident",
+    "severity": "HIGH",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "test@securetech.com",
+    "affected_host": "WS-TEST-01",
+    "related_alerts": [
+      "ALT-1001"
+    ],
+    "summary": "Test incident creation",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-046",
+    "created_at": "2026-07-27T17:15:22Z",
+    "title": "Test Incident",
+    "severity": "HIGH",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "test@securetech.com",
+    "affected_host": "WS-TEST-01",
+    "related_alerts": [
+      "ALT-1001"
+    ],
+    "summary": "Test incident creation",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-047",
+    "created_at": "2026-07-27T17:15:35Z",
+    "title": "Active Ransomware & C2 Beaconing on WS-FINANCE-04",
+    "severity": "CRITICAL",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "sarah.c@securetech.com",
+    "affected_host": "WS-FINANCE-04",
+    "related_alerts": [
+      "ALT-1003",
+      "ALT-1004",
+      "ALT-1005"
+    ],
+    "summary": "Multi-stage attack involving PowerShell payload execution, Cobalt Strike C2 beaconing (185.220.101.5), and mass file encryption.",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-048",
+    "created_at": "2026-07-27T17:15:35Z",
+    "title": "Active Ransomware & C2 Beaconing on WS-FINANCE-04",
+    "severity": "CRITICAL",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "sarah.c@securetech.com",
+    "affected_host": "WS-FINANCE-04",
+    "related_alerts": [
+      "ALT-1003",
+      "ALT-1004",
+      "ALT-1005"
+    ],
+    "summary": "Multi-stage attack involving PowerShell payload execution, Cobalt Strike C2 beaconing (185.220.101.5), and mass file encryption.",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-049",
+    "created_at": "2026-07-27T17:15:35Z",
+    "title": "Test Incident",
+    "severity": "HIGH",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "test@securetech.com",
+    "affected_host": "WS-TEST-01",
+    "related_alerts": [
+      "ALT-1001"
+    ],
+    "summary": "Test incident creation",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-050",
+    "created_at": "2026-07-27T17:47:42Z",
+    "title": "Active Ransomware & C2 Beaconing on WS-FINANCE-04",
+    "severity": "CRITICAL",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "sarah.c@securetech.com",
+    "affected_host": "WS-FINANCE-04",
+    "related_alerts": [
+      "ALT-1003",
+      "ALT-1004",
+      "ALT-1005"
+    ],
+    "summary": "Multi-stage attack involving PowerShell payload execution, Cobalt Strike C2 beaconing (185.220.101.5), and mass file encryption.",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-051",
+    "created_at": "2026-07-27T17:47:42Z",
+    "title": "Active Ransomware & C2 Beaconing on WS-FINANCE-04",
+    "severity": "CRITICAL",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "sarah.c@securetech.com",
+    "affected_host": "WS-FINANCE-04",
+    "related_alerts": [
+      "ALT-1003",
+      "ALT-1004",
+      "ALT-1005"
+    ],
+    "summary": "Multi-stage attack involving PowerShell payload execution, Cobalt Strike C2 beaconing (185.220.101.5), and mass file encryption.",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-052",
+    "created_at": "2026-07-27T17:47:43Z",
+    "title": "Test Incident",
+    "severity": "HIGH",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "test@securetech.com",
+    "affected_host": "WS-TEST-01",
+    "related_alerts": [
+      "ALT-1001"
+    ],
+    "summary": "Test incident creation",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-053",
+    "created_at": "2026-07-27T17:53:17Z",
+    "title": "Active Ransomware & C2 Beaconing on WS-FINANCE-04",
+    "severity": "CRITICAL",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "sarah.c@securetech.com",
+    "affected_host": "WS-FINANCE-04",
+    "related_alerts": [
+      "ALT-1003",
+      "ALT-1004",
+      "ALT-1005"
+    ],
+    "summary": "Multi-stage attack involving PowerShell payload execution, Cobalt Strike C2 beaconing (185.220.101.5), and mass file encryption.",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-054",
+    "created_at": "2026-07-27T17:53:18Z",
+    "title": "Active Ransomware & C2 Beaconing on WS-FINANCE-04",
+    "severity": "CRITICAL",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "sarah.c@securetech.com",
+    "affected_host": "WS-FINANCE-04",
+    "related_alerts": [
+      "ALT-1003",
+      "ALT-1004",
+      "ALT-1005"
+    ],
+    "summary": "Multi-stage attack involving PowerShell payload execution, Cobalt Strike C2 beaconing (185.220.101.5), and mass file encryption.",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  },
+  {
+    "incident_id": "INC-2026-055",
+    "created_at": "2026-07-27T17:53:18Z",
+    "title": "Test Incident",
+    "severity": "HIGH",
+    "status": "OPEN",
+    "assigned_analyst": "SOC AI Assistant (Assigned)",
+    "affected_user": "test@securetech.com",
+    "affected_host": "WS-TEST-01",
+    "related_alerts": [
+      "ALT-1001"
+    ],
+    "summary": "Test incident creation",
+    "recommended_actions": [
+      "Isolate affected workstation host",
+      "Revoke compromise user tokens",
+      "Perform full threat hunting scan"
+    ]
+  }
+]

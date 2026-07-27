@@ -1,0 +1,47 @@
+[
+  {
+    "username": "analyst_l1",
+    "password_hash": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+    "name": "Alex Mercer",
+    "email": "alex.m@securetech.com",
+    "role": "L1",
+    "role_display": "L1 SOC Analyst",
+    "department": "Security Operations Center"
+  },
+  {
+    "username": "analyst_l2",
+    "password_hash": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+    "name": "David Miller",
+    "email": "david.m@securetech.com",
+    "role": "L2",
+    "role_display": "L2 SOC Analyst & Threat Hunter",
+    "department": "Threat Intelligence & Detection"
+  },
+  {
+    "username": "manager",
+    "password_hash": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+    "name": "Sarah Connor",
+    "email": "sarah.c@securetech.com",
+    "role": "MANAGER",
+    "role_display": "SOC Manager / Incident Commander",
+    "department": "Cyber Incident Response Team"
+  },
+  {
+    "username": "ciso",
+    "password_hash": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+    "name": "Elena Rostova",
+    "email": "elena.r@securetech.com",
+    "role": "CISO",
+    "role_display": "CISO / Security Executive",
+    "department": "Executive Leadership"
+  },
+  {
+    "username": "admin",
+    "password_hash": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+    "name": "System Admin",
+    "email": "sysadmin@securetech.com",
+    "role": "ADMIN",
+    "role_display": "Security Administrator",
+    "department": "IT & Security Infrastructure"
+  }
+]
