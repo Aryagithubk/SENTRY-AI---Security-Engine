@@ -45,9 +45,9 @@ html, body, [data-testid="stAppViewContainer"] {
 .stApp {
   min-height: 100vh;
   background:
-    radial-gradient(900px 500px at 76% -20%, rgba(73,166,255,.12), transparent 66%),
-    radial-gradient(700px 460px at 8% 0%, rgba(139,124,255,.08), transparent 64%),
-    var(--bg-app) !important;
+    radial-gradient(860px 500px at 72% -20%, rgba(73,166,255,.16), transparent 66%),
+    radial-gradient(680px 440px at 8% 0%, rgba(139,124,255,.10), transparent 64%),
+    linear-gradient(180deg, #0b1426 0%, var(--bg-app) 38%) !important;
   color: var(--text-primary) !important;
 }
 .stApp p, .stApp li, .stApp span, .stApp div, .stApp label { color: inherit; }
@@ -122,11 +122,12 @@ div[data-testid="stMetric"] { min-height:106px; padding:1rem !important; backgro
 [data-testid="stTextInput"] input,[data-testid="stTextArea"] textarea,[data-testid="stNumberInput"] input,[data-testid="stChatInput"],[data-testid="stSelectbox"] > div > div,[data-testid="stMultiSelect"] > div > div { background:var(--bg-input) !important; color:var(--text-primary) !important; border:1px solid var(--border-default) !important; border-radius:var(--radius-sm) !important; box-shadow:none !important; }
 [data-testid="stForm"] { padding:1.15rem !important; background:var(--bg-card) !important; border:1px solid var(--border-subtle) !important; border-radius:var(--radius-md) !important; box-shadow:var(--shadow-sm) !important; }
 [data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p, .stCaption { color:var(--text-muted) !important; }
-[data-testid="stChatInput"] { padding:2px 8px !important; border-radius:var(--radius-md) !important; box-shadow:var(--shadow-md) !important; }
-[data-testid="stChatInput"] textarea { min-height:52px !important; background:transparent !important; color:var(--text-primary) !important; border:0 !important; font-size:.92rem !important; }
+[data-testid="stChatInput"] { padding:5px 7px 5px 14px !important; border:1px solid #46678e !important; border-radius:14px !important; background:linear-gradient(135deg,rgba(12,26,45,.98),rgba(16,32,55,.96)) !important; box-shadow:0 10px 26px rgba(0,0,0,.27),inset 0 1px rgba(255,255,255,.045) !important; }
+[data-testid="stChatInput"] textarea { min-height:48px !important; padding:.68rem 0 !important; background:transparent !important; color:var(--text-primary) !important; border:0 !important; font:500 .86rem/1.45 "JetBrains Mono",monospace !important; letter-spacing:.01em; }
 input::placeholder, textarea::placeholder { color:var(--text-muted) !important; opacity:1 !important; }
-[data-testid="stTextInput"] input:focus,[data-testid="stTextArea"] textarea:focus,[data-testid="stNumberInput"] input:focus,[data-testid="stChatInput"]:focus-within { border-color:var(--accent-primary) !important; outline:3px solid rgba(73,166,255,.20) !important; outline-offset:1px; }
-[data-testid="stChatInput"] button { color:var(--accent-hover) !important; background:transparent !important; border:0 !important; box-shadow:none !important; }
+[data-testid="stTextInput"] input:focus,[data-testid="stTextArea"] textarea:focus,[data-testid="stNumberInput"] input:focus,[data-testid="stChatInput"]:focus-within { border-color:#68b7ff !important; outline:3px solid rgba(73,166,255,.17) !important; outline-offset:1px; box-shadow:0 0 0 1px rgba(143,209,255,.13),0 12px 30px rgba(0,0,0,.30) !important; }
+[data-testid="stChatInput"] button { width:36px !important; height:36px !important; margin:4px 1px 4px 8px !important; padding:0 !important; color:#fff !important; background:linear-gradient(135deg,#2888d6,#607ce0) !important; border:1px solid #78baff !important; border-radius:10px !important; box-shadow:0 5px 13px rgba(37,125,209,.28) !important; transition:transform .16s ease,filter .16s ease !important; }
+[data-testid="stChatInput"] button:hover { transform:translateY(-1px) !important; filter:brightness(1.1); }
 .stButton > button, [data-testid="stFormSubmitButton"] > button { min-height:42px; color:#fff !important; background:linear-gradient(135deg,#287fcd,#4c83d9) !important; border:1px solid #61aafa !important; border-radius:var(--radius-sm) !important; font:600 .78rem "DM Sans",sans-serif !important; box-shadow:0 7px 16px rgba(35,119,201,.22) !important; transition:transform .16s ease,filter .16s ease,box-shadow .16s ease !important; }.stButton > button:hover,[data-testid="stFormSubmitButton"] > button:hover{transform:translateY(-1px)!important;filter:brightness(1.08);box-shadow:0 9px 20px rgba(35,119,201,.30)!important}.stButton > button:focus-visible,[data-testid="stFormSubmitButton"] > button:focus-visible{outline:3px solid rgba(116,188,255,.45)!important;outline-offset:2px!important}.stButton > button:disabled{color:#aab9ce!important;background:#29364b!important;border-color:#465774!important;box-shadow:none!important;cursor:not-allowed!important}
 /* BaseWeb select widgets set their own foreground in light browser mode. */
 [data-testid="stSelectbox"] [data-baseweb="select"],

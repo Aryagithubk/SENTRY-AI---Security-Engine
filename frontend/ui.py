@@ -149,7 +149,7 @@ def run_main_ui():
     if not processing and st.session_state.get("preset_query"):
         user_input = st.session_state.pop("preset_query")
     else:
-        user_input = st.chat_input("Ask SENTRY AI a security query, user email, host IP, or command...", disabled=processing)
+        user_input = st.chat_input("Investigate an alert, user, host, IP address, or incident…", disabled=processing)
 
     # Process pending HITL approval execution
     if st.session_state.get("hitl_approved"):
