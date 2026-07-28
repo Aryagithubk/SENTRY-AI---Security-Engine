@@ -33,6 +33,7 @@ class ExecutionVisualizer:
     active_tool: str = "Awaiting investigation"
     specialists: Dict[str, Dict[str, str]] = field(default_factory=dict)
     event_log: list[Dict[str, str]] = field(default_factory=list)
+    flow_nodes: Dict[str, Dict[str, str]] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         defaults = {node_id: {"status": "pending", "detail": "Standby"} for node_id, *_ in TOPOLOGY}
@@ -47,6 +48,7 @@ class ExecutionVisualizer:
             active_tool=state.get("active_tool", "Awaiting investigation"),
             specialists=state.get("specialists", {}),
             event_log=state.get("event_log", []),
+            flow_nodes=state.get("flow_nodes", {}),
         )
 
     def save(self) -> None:
@@ -55,6 +57,7 @@ class ExecutionVisualizer:
             "active_tool": self.active_tool,
             "specialists": self.specialists,
             "event_log": self.event_log[-8:],
+            "flow_nodes": self.flow_nodes,
         }
         st.session_state["sentry_bot_executing"] = any(n["status"] == "running" for n in self.nodes.values())
 
@@ -63,6 +66,7 @@ class ExecutionVisualizer:
         self.active_tool = "Awaiting investigation"
         self.specialists = {}
         self.event_log = []
+        self.flow_nodes = {}
         self.save()
 
     def update_node_status(self, node_id: str, status: NodeStatus | str, detail: str = "") -> None:
@@ -82,9 +86,12 @@ class ExecutionVisualizer:
         kind, node_id = str(event.get("event", "")), self._node_for_event(event)
         detail = str(event.get("detail") or event.get("node") or "Processing")
         actor = str(event.get("node") or (event.get("tool") if kind == "tool_completed" else node_id))
-        status_for_kind = {"node_started": "running", "node_completed": "completed", "node_waiting": "error", "tool_completed": "completed"}.get(kind)
+        status_for_kind = {"node_started": "running", "node_completed": "completed", "node_waiting": "error", "node_error": "error", "tool_completed": "completed"}.get(kind)
         if status_for_kind:
             self.event_log.append({"actor": actor, "detail": detail, "status": status_for_kind, "kind": kind})
+        flow_node = str(event.get("flow_node") or "")
+        if flow_node and status_for_kind:
+            self.flow_nodes[flow_node] = {"title": actor, "detail": detail, "status": status_for_kind}
         if node_id == "agent" and status_for_kind:
             self.specialists[actor] = {"status": status_for_kind, "detail": detail}
         if kind == "node_started":
@@ -94,8 +101,8 @@ class ExecutionVisualizer:
         elif kind == "tool_completed":
             self.active_tool = str(event.get("tool") or "Telemetry operation")
             self.update_node_status("tools", "completed", self.active_tool)
-        elif kind == "node_waiting":
-            self.update_node_status(node_id, "error", "Analyst authorization required")
+        elif kind in {"node_waiting", "node_error"}:
+            self.update_node_status(node_id, "error", detail)
         elif kind == "node_completed":
             self.update_node_status(node_id, "completed", detail)
         else:
@@ -105,9 +112,9 @@ class ExecutionVisualizer:
         return {"nodes": [
             {"id": node_id, "title": title, "badge": badge, "role": role, "x": x, "y": y, **self.nodes[node_id]}
             for node_id, title, badge, role, x, y in TOPOLOGY
-        ], "active_tool": self.active_tool, "specialists": self.specialists, "event_log": self.event_log[-4:]}
+        ], "active_tool": self.active_tool, "specialists": self.specialists, "event_log": self.event_log[-4:], "flow_nodes": self.flow_nodes}
 
-    def render(self, slot: Any, height: int = 430) -> None:
+    def render(self, slot: Any, height: int = 480) -> None:
         render_execution_graph(slot, self.payload(), height)
 
 
@@ -129,7 +136,7 @@ def _edge_path(source: Dict[str, Any], target: Dict[str, Any]) -> str:
     return f"M{sx} {sy} C{sx + bend} {sy} {tx - bend} {ty} {tx} {ty}"
 
 
-def render_execution_graph(slot: Any, payload: Dict[str, Any], height: int = 360) -> None:
+def render_execution_graph(slot: Any, payload: Dict[str, Any], height: int = 480) -> None:
     """Render server-built SVG markup, so the topology is never JS-dependent."""
     nodes = {node["id"]: node for node in payload["nodes"]}
     edges = []
@@ -164,20 +171,24 @@ def render_execution_graph(slot: Any, payload: Dict[str, Any], height: int = 360
         short_detail = escape(item.get("detail", "")[:46] + ("…" if len(item.get("detail", "")) > 46 else ""))
         y = 132 + index * 22
         specialist_rows.append(f'''<g class="specialist-row" transform="translate(350 {y})"><rect width="230" height="18" rx="3"/><circle cx="10" cy="9" r="3" fill="{color}"/><text class="specialist-name" x="19" y="12">{short_name}</text><text class="specialist-detail" x="224" y="12">{short_detail}</text></g>''')
-    ledger_items = payload.get("event_log", [])
-    ledger = []
-    for index, item in enumerate(ledger_items[-3:]):
+    flow_items = list(payload.get("flow_nodes", {}).items())[-7:]
+    if not flow_items:
+        flow_items = [("awaiting", {"title": "AWAITING EXECUTION", "detail": "Submit a query to start the LangGraph run.", "status": "pending"})]
+    flow_markup = []
+    for index, (_, item) in enumerate(flow_items):
         color = COLORS.get(item.get("status", "pending"), COLORS["pending"])
-        actor = escape(item.get("actor", "workflow")[:20])
-        detail = escape(item.get("detail", "")[:34])
-        x = 38 + index * 318
-        ledger.append(f'<g transform="translate({x} 400)"><circle cx="3" cy="0" r="3" fill="{color}"/><text class="ledger-actor" x="12" y="3">{actor}</text><text class="ledger-detail" x="12" y="14">{detail}</text></g>')
+        title = escape(item.get("title", "WORKFLOW NODE")[:19])
+        detail = escape(item.get("detail", "")[:22])
+        x = 18 + index * 140
+        if index:
+            flow_markup.append(f'<path class="runtime-edge" d="M{x - 14} 424h10"/>')
+        flow_markup.append(f'''<g class="runtime-node" transform="translate({x} 404)"><rect width="126" height="38" rx="5"/><circle cx="9" cy="10" r="3" fill="{color}"/><text class="runtime-title" x="17" y="13">{title}</text><text class="runtime-detail" x="9" y="28">{detail}</text></g>''')
     html = f'''<!doctype html><html><body><section class="topology">
       <header><div><i></i>LIVE EXECUTION TOPOLOGY</div><small>{escape(str(payload["active_tool"]))}</small></header>
-      <svg viewBox="0 0 1000 430" preserveAspectRatio="xMidYMid meet" aria-label="Multi-agent execution topology" role="img">
+      <svg viewBox="0 0 1000 480" preserveAspectRatio="xMidYMid meet" aria-label="Multi-agent execution topology" role="img">
        <defs><filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
-       {''.join(edges)}<text class="swarm-label" x="350" y="120">ACTIVE SPECIALIST WORKERS</text>{''.join(specialist_rows)}<line class="ledger-line" x1="28" y1="384" x2="972" y2="384"/>{''.join(ledger)}{''.join(node_markup)}</svg></section>
-      <style>html,body{{margin:0;overflow:hidden;background:transparent}}.topology{{height:{height}px;position:relative;overflow:hidden;border:1px solid rgba(0,240,255,.18);border-radius:10px;background:radial-gradient(ellipse 65% 90% at 50% 20%,rgba(0,240,255,.10),transparent 70%),#080e17;font-family:Inter,Arial,sans-serif}}.topology:after{{content:"";position:absolute;inset:0;pointer-events:none;opacity:.25;background-image:linear-gradient(rgba(100,220,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(100,220,255,.07) 1px,transparent 1px);background-size:28px 28px}}header{{position:absolute;z-index:2;top:16px;left:18px;right:18px;display:flex;justify-content:space-between;gap:12px;color:#dffbff;font:700 10px JetBrains Mono,monospace;letter-spacing:1.2px;pointer-events:none}}header i{{display:inline-block;width:6px;height:6px;margin:0 7px 1px 0;border-radius:50%;background:#00ff66;box-shadow:0 0 10px #00ff66}}header small{{max-width:48%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#8299ad;font:600 9px JetBrains Mono,monospace;letter-spacing:0}}svg{{position:relative;z-index:1;display:block;width:100%;height:100%}}.edge{{fill:none;stroke:rgba(143,167,190,.30);stroke-width:1.4}}.edge.active{{stroke:var(--edge);stroke-width:1.8;filter:url(#glow)}}.edge.fault{{stroke:#ff3366;stroke-dasharray:5 5}}.pulse{{filter:url(#glow)}}.plate{{fill:rgba(12,22,36,.97);stroke:rgba(255,255,255,.12);stroke-width:1.25}}.halo{{fill:none;stroke:none}}.node.running .halo{{stroke:#00f0ff;stroke-width:1;stroke-dasharray:3 5;transform-origin:center;animation:orbit 2.8s linear infinite}}.node.running .plate{{stroke:#00f0ff;filter:url(#glow)}}.node.completed .plate{{stroke:#00ff66}}.node.error .plate{{stroke:#ff3366;filter:url(#glow)}}.icon{{fill:none;stroke:var(--node);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}}.badge{{fill:var(--node);font:800 9px JetBrains Mono,monospace;text-anchor:middle}}.node-title{{fill:#e5f6ff;font:700 8px JetBrains Mono,monospace;text-anchor:middle;letter-spacing:.2px}}.node-state{{fill:var(--node);font:700 7px JetBrains Mono,monospace;text-anchor:middle;letter-spacing:.65px}}.swarm-label{{fill:#7c9ab0;font:700 7px JetBrains Mono,monospace;letter-spacing:1px}}.specialist-row rect{{fill:rgba(9,18,29,.94);stroke:rgba(0,240,255,.14);stroke-width:.6}}.specialist-name{{fill:#dff7ff;font:700 7px JetBrains Mono,monospace}}.specialist-detail{{fill:#7894a9;font:500 6px JetBrains Mono,monospace;text-anchor:end}}.ledger-line{{stroke:rgba(0,240,255,.14);stroke-width:1}}.ledger-actor{{fill:#c9f6ff;font:700 7px JetBrains Mono,monospace}}.ledger-detail{{fill:#7591a6;font:500 6px JetBrains Mono,monospace}}@keyframes orbit{{to{{transform:rotate(360deg)}}}}@media(max-width:640px){{header small{{display:none}}}}</style></body></html>'''
+       {''.join(edges)}<text class="swarm-label" x="350" y="120">ACTIVE SPECIALIST WORKERS</text>{''.join(specialist_rows)}<line class="ledger-line" x1="18" y1="384" x2="982" y2="384"/><text class="runtime-label" x="18" y="398">LANGGRAPH RUNTIME TRACE · ACTUAL NODE EXECUTION</text>{''.join(flow_markup)}{''.join(node_markup)}</svg></section>
+      <style>html,body{{margin:0;overflow:hidden;background:transparent}}.topology{{height:{height}px;position:relative;overflow:hidden;border:1px solid rgba(0,240,255,.18);border-radius:10px;background:radial-gradient(ellipse 65% 90% at 50% 20%,rgba(0,240,255,.10),transparent 70%),#080e17;font-family:Inter,Arial,sans-serif}}.topology:after{{content:"";position:absolute;inset:0;pointer-events:none;opacity:.25;background-image:linear-gradient(rgba(100,220,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(100,220,255,.07) 1px,transparent 1px);background-size:28px 28px}}header{{position:absolute;z-index:2;top:16px;left:18px;right:18px;display:flex;justify-content:space-between;gap:12px;color:#dffbff;font:700 10px JetBrains Mono,monospace;letter-spacing:1.2px;pointer-events:none}}header i{{display:inline-block;width:6px;height:6px;margin:0 7px 1px 0;border-radius:50%;background:#00ff66;box-shadow:0 0 10px #00ff66}}header small{{max-width:48%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#8299ad;font:600 9px JetBrains Mono,monospace;letter-spacing:0}}svg{{position:relative;z-index:1;display:block;width:100%;height:100%}}.edge{{fill:none;stroke:rgba(143,167,190,.30);stroke-width:1.4}}.edge.active{{stroke:var(--edge);stroke-width:1.8;filter:url(#glow)}}.edge.fault{{stroke:#ff3366;stroke-dasharray:5 5}}.pulse{{filter:url(#glow)}}.plate{{fill:rgba(12,22,36,.97);stroke:rgba(255,255,255,.12);stroke-width:1.25}}.halo{{fill:none;stroke:none}}.node.running .halo{{stroke:#00f0ff;stroke-width:1;stroke-dasharray:3 5;transform-origin:center;animation:orbit 2.8s linear infinite}}.node.running .plate{{stroke:#00f0ff;filter:url(#glow)}}.node.completed .plate{{stroke:#00ff66}}.node.error .plate{{stroke:#ff3366;filter:url(#glow)}}.icon{{fill:none;stroke:var(--node);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}}.badge{{fill:var(--node);font:800 9px JetBrains Mono,monospace;text-anchor:middle}}.node-title{{fill:#e5f6ff;font:700 8px JetBrains Mono,monospace;text-anchor:middle;letter-spacing:.2px}}.node-state{{fill:var(--node);font:700 7px JetBrains Mono,monospace;text-anchor:middle;letter-spacing:.65px}}.swarm-label,.runtime-label{{fill:#7c9ab0;font:700 7px JetBrains Mono,monospace;letter-spacing:1px}}.specialist-row rect,.runtime-node rect{{fill:rgba(9,18,29,.94);stroke:rgba(0,240,255,.14);stroke-width:.6}}.specialist-name{{fill:#dff7ff;font:700 7px JetBrains Mono,monospace}}.specialist-detail{{fill:#7894a9;font:500 6px JetBrains Mono,monospace;text-anchor:end}}.ledger-line,.runtime-edge{{stroke:rgba(0,240,255,.18);stroke-width:1}}.runtime-title{{fill:#dff7ff;font:700 6px JetBrains Mono,monospace}}.runtime-detail{{fill:#7894a9;font:500 5.6px JetBrains Mono,monospace}}@keyframes orbit{{to{{transform:rotate(360deg)}}}}@media(max-width:640px){{header small{{display:none}}}}</style></body></html>'''
     with slot:
         components.html(html, height=height, scrolling=False)
 
@@ -186,7 +197,7 @@ def render_cyber_bot(executing: bool = False, slot: Any | None = None) -> None:
     """Render a compact guardian that tracks the pointer across the app viewport."""
     html = '''<div id="guardian"><div id="fallback"><svg viewBox="0 0 180 180"><circle cx="90" cy="90" r="67" class="ring"/><path d="M53 87q0-40 37-40t37 40v25q0 24-37 24t-37-24z" class="shell"/><path d="M62 88q28-17 56 0v17q-28 14-56 0z" class="visor"/><circle cx="77" cy="96" r="4"/><circle cx="103" cy="96" r="4"/></svg></div><div class="caption"><b>SENTRY GUARDIAN</b><span>__LABEL__</span></div></div>
     <style>html,body{{margin:0;overflow:visible;background:transparent}}#guardian{{width:172px;height:184px;position:relative;user-select:none;background:radial-gradient(circle at 50% 45%,rgba(0,240,255,.17),transparent 64%)}}#guardian canvas{{position:absolute;inset:0;width:172px!important;height:158px!important}}#fallback{{height:158px;display:grid;place-items:center;filter:drop-shadow(0 0 12px rgba(0,240,255,.52))}}#fallback svg{{width:136px;height:136px}}#fallback .ring{{fill:none;stroke:#00f0ff;stroke-width:1.5;stroke-dasharray:6 8;transform-origin:90px 90px;animation:spin 8s linear infinite}}#fallback .shell{{fill:#dffaff;stroke:#7eefff;stroke-width:3}}#fallback .visor,#fallback circle{{fill:#00f0ff;stroke:#00f0ff}.caption{{position:absolute;left:0;right:0;bottom:4px;text-align:center;font:700 7px JetBrains Mono,monospace;letter-spacing:1.05px;color:#dffbff;text-shadow:0 0 10px #00c8dd}.caption span{{display:block;margin-top:4px;color:#00f0ff;font-size:6px}}@keyframes spin{{to{{transform:rotate(360deg)}}}}</style>
-    <script type="module">const frame=window.frameElement,host=frame&&frame.parentElement;if(frame){{frame.style.cssText+='position:fixed!important;right:18px!important;bottom:82px!important;width:172px!important;height:184px!important;z-index:100!important;border:0!important;background:transparent!important;pointer-events:none!important'}}if(host)host.style.cssText+='position:fixed!important;right:18px!important;bottom:82px!important;width:172px!important;height:184px!important;z-index:100!important;pointer-events:none!important';try{{const T=await import('https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js'),root=document.querySelector('#guardian'),scene=new T.Scene(),camera=new T.PerspectiveCamera(34,172/158,.1,100),renderer=new T.WebGLRenderer({{alpha:true,antialias:true,powerPreference:'high-performance'}});camera.position.set(0,.05,6.9);renderer.setSize(172,158);renderer.setPixelRatio(Math.min(devicePixelRatio,2));root.prepend(renderer.domElement);document.querySelector('#fallback').style.display='none';const bot=new T.Group(),gaze=new T.Group(),white=new T.MeshPhysicalMaterial({{color:0xe9fbff,metalness:.86,roughness:.18,clearcoat:1}}),dark=new T.MeshStandardMaterial({{color:0x0a1724,metalness:.9,roughness:.19}}),cyan=new T.MeshStandardMaterial({{color:0x8dffff,emissive:0x00aac4,emissiveIntensity:__EMISSION__}});const skull=new T.Mesh(new T.SphereGeometry(1.05,40,28),white);skull.scale.set(1,.78,.82);bot.add(skull);const face=new T.Mesh(new T.SphereGeometry(.84,36,24),dark);face.scale.set(1,.43,.46);face.position.z=.68;bot.add(face);const visor=new T.Mesh(new T.BoxGeometry(1.22,.18,.08),cyan);visor.position.set(0,.08,1.05);gaze.add(visor);[-.38,.38].forEach(x=>{{const eye=new T.Mesh(new T.SphereGeometry(.09,18,12),cyan);eye.position.set(x,.08,1.11);gaze.add(eye)}});bot.add(gaze);const jaw=new T.Mesh(new T.CylinderGeometry(.48,.63,.32,32),white);jaw.position.y=-.83;bot.add(jaw);const core=new T.Mesh(new T.SphereGeometry(.14,20,16),cyan);core.position.set(0,-.78,.62);bot.add(core);const rings=[];for(let i=0;i<3;i++){{const ring=new T.Mesh(new T.TorusGeometry(1.18+i*.16,.014,8,64),cyan);ring.rotation.x=2.43+i*.25;bot.add(ring);rings.push(ring)}}scene.add(bot,new T.HemisphereLight(0xeaffff,0x05101d,3));const key=new T.PointLight(0xffffff,15,18);key.position.set(2.5,3,4);scene.add(key);let targetX=0,targetY=0,time=0,lastFrame=performance.now();const pointerDocument=(()=>{{try{{return (frame&&frame.ownerDocument)||window.parent.document}}catch(error){{return document}}}})();const pointerWindow=pointerDocument.defaultView||window;const trackPointer=event=>{{const width=Math.max(pointerWindow.innerWidth||0,1),height=Math.max(pointerWindow.innerHeight||0,1);targetX=Math.max(-1,Math.min(1,event.clientX/width*2-1));targetY=Math.max(-1,Math.min(1,event.clientY/height*2-1))}};pointerDocument.addEventListener('pointermove',trackPointer,{{passive:true}});function animate(now){{const delta=Math.min((now-lastFrame)/1000,.05);lastFrame=now;time+=delta;bot.position.y=Math.sin(time*1.25)*.11;bot.rotation.y=T.MathUtils.damp(bot.rotation.y,targetX*1.12,10,delta);bot.rotation.x=T.MathUtils.damp(bot.rotation.x,targetY*.52,10,delta);gaze.position.x=T.MathUtils.damp(gaze.position.x,targetX*.105,12,delta);gaze.position.y=T.MathUtils.damp(gaze.position.y,-targetY*.045,12,delta);core.scale.setScalar(1+Math.sin(time*__PULSE_RATE__)*.17);rings.forEach((ring,index)=>ring.rotation.z+=delta*.5*(index+1));renderer.render(scene,camera);requestAnimationFrame(animate)}}requestAnimationFrame(animate)}}catch(error){{}}</script>'''
+    <script type="module">const frame=window.frameElement,host=frame&&frame.parentElement;if(frame){{frame.style.cssText+='position:fixed!important;right:18px!important;bottom:82px!important;width:172px!important;height:184px!important;z-index:100!important;border:0!important;background:transparent!important;pointer-events:none!important'}}if(host)host.style.cssText+='position:fixed!important;right:18px!important;bottom:82px!important;width:172px!important;height:184px!important;z-index:100!important;pointer-events:none!important';try{{const T=await import('https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js'),root=document.querySelector('#guardian'),scene=new T.Scene(),camera=new T.PerspectiveCamera(34,172/158,.1,100),renderer=new T.WebGLRenderer({{alpha:true,antialias:true,powerPreference:'high-performance'}});camera.position.set(0,.05,6.9);renderer.setSize(172,158);renderer.setPixelRatio(Math.min(devicePixelRatio,2));root.prepend(renderer.domElement);document.querySelector('#fallback').style.display='none';const bot=new T.Group(),head=new T.Group(),gaze=new T.Group(),white=new T.MeshPhysicalMaterial({{color:0xe9fbff,metalness:.86,roughness:.18,clearcoat:1}}),dark=new T.MeshStandardMaterial({{color:0x0a1724,metalness:.9,roughness:.19}}),cyan=new T.MeshStandardMaterial({{color:0x8dffff,emissive:0x00aac4,emissiveIntensity:__EMISSION__}});const skull=new T.Mesh(new T.SphereGeometry(1.05,40,28),white);skull.scale.set(1,.78,.82);head.add(skull);const face=new T.Mesh(new T.SphereGeometry(.84,36,24),dark);face.scale.set(1,.43,.46);face.position.z=.68;head.add(face);const visor=new T.Mesh(new T.BoxGeometry(1.22,.18,.08),cyan);visor.position.set(0,.08,1.05);gaze.add(visor);[-.38,.38].forEach(x=>{{const eye=new T.Mesh(new T.SphereGeometry(.09,18,12),cyan);eye.position.set(x,.08,1.11);gaze.add(eye)}});head.add(gaze);const jaw=new T.Mesh(new T.CylinderGeometry(.48,.63,.32,32),white);jaw.position.y=-.83;head.add(jaw);bot.add(head);const core=new T.Mesh(new T.SphereGeometry(.14,20,16),cyan);core.position.set(0,-.78,.62);bot.add(core);const rings=[];for(let i=0;i<3;i++){{const ring=new T.Mesh(new T.TorusGeometry(1.18+i*.16,.014,8,64),cyan);ring.rotation.x=2.43+i*.25;bot.add(ring);rings.push(ring)}}scene.add(bot,new T.HemisphereLight(0xeaffff,0x05101d,3));const key=new T.PointLight(0xffffff,15,18);key.position.set(2.5,3,4);scene.add(key);let targetX=0,targetY=0,time=0,lastFrame=performance.now();const pointerDocument=(()=>{{try{{return (frame&&frame.ownerDocument)||window.parent.document}}catch(error){{return document}}}})();const pointerWindow=pointerDocument.defaultView||window;const trackPointer=event=>{{const width=Math.max(pointerWindow.innerWidth||0,1),height=Math.max(pointerWindow.innerHeight||0,1);targetX=Math.max(-1,Math.min(1,event.clientX/width*2-1));targetY=Math.max(-1,Math.min(1,event.clientY/height*2-1))}};pointerDocument.addEventListener('pointermove',trackPointer,{{passive:true}});function animate(now){{const delta=Math.min((now-lastFrame)/1000,.05);lastFrame=now;time+=delta;bot.position.y=Math.sin(time*1.25)*.11;head.rotation.y=T.MathUtils.damp(head.rotation.y,targetX*1.22,9,delta);head.rotation.x=T.MathUtils.damp(head.rotation.x,targetY*.58,9,delta);gaze.position.x=T.MathUtils.damp(gaze.position.x,targetX*.12,12,delta);gaze.position.y=T.MathUtils.damp(gaze.position.y,-targetY*.055,12,delta);core.scale.setScalar(1+Math.sin(time*__PULSE_RATE__)*.17);rings.forEach((ring,index)=>ring.rotation.z+=delta*.5*(index+1));renderer.render(scene,camera);requestAnimationFrame(animate)}}requestAnimationFrame(animate)}}catch(error){{}}</script>'''
     html = (html.replace("__LABEL__", "ACTIVE SCAN" if executing else "CURSOR TRACKING")
                 .replace("__EMISSION__", "3.5" if executing else "1.7")
                 .replace("__PULSE_RATE__", "8" if executing else "3")

@@ -33,6 +33,7 @@ class SecureOpsGraph:
 
     def __init__(self, provider: str = None):
         self.provider = provider
+        self._event_callback: Optional[Callable[[Dict[str, Any]], None]] = None
         self.supervisor = SupervisorAgent(provider=provider)
         self.conversational_agent = ConversationalAgent(provider=provider)
         self.alert_agent = AlertAgent()
@@ -46,22 +47,22 @@ class SecureOpsGraph:
 
     def _build_graph(self):
         workflow = StateGraph(SecureOpsState)
-        workflow.add_node("preprocess", self._preprocess)
-        workflow.add_node("orchestrator", self._orchestrate)
-        workflow.add_node("conversational", self._run_conversational)
-        workflow.add_node("alert", self._run_alert)
-        workflow.add_node("identity", self._run_identity)
-        workflow.add_node("endpoint", self._run_endpoint)
-        workflow.add_node("incident", self._run_incident)
-        workflow.add_node("correlation", self._run_correlation)
-        workflow.add_node("reporting", self._run_reporting)
-        workflow.add_node("report_generation", self._run_reporting)
-        workflow.add_node("update_state", self._update_state)
-        workflow.add_node("reevaluate", self._reevaluate)
-        workflow.add_node("risk_findings", self._risk_findings)
-        workflow.add_node("human_review", self._human_review)
-        workflow.add_node("final_synthesis", self._final_synthesis)
-        workflow.add_node("audit_log", self._audit_log)
+        workflow.add_node("preprocess", self._tracked_node("preprocess", "PREPROCESS QUERY", 1, self._preprocess))
+        workflow.add_node("orchestrator", self._tracked_node("orchestrator", "SUPERVISOR ROUTING", 1, self._orchestrate))
+        workflow.add_node("conversational", self._tracked_node("conversational", "CONVERSATIONAL AGENT", 2, self._run_conversational))
+        workflow.add_node("alert", self._tracked_node("alert", "ALERT ANALYSIS AGENT", 2, self._run_alert))
+        workflow.add_node("identity", self._tracked_node("identity", "IDENTITY ANALYSIS AGENT", 2, self._run_identity))
+        workflow.add_node("endpoint", self._tracked_node("endpoint", "ENDPOINT ANALYSIS AGENT", 2, self._run_endpoint))
+        workflow.add_node("incident", self._tracked_node("incident", "INCIDENT RESPONSE AGENT", 2, self._run_incident))
+        workflow.add_node("correlation", self._tracked_node("correlation", "THREAT CORRELATION AGENT", 2, self._run_correlation))
+        workflow.add_node("reporting", self._tracked_node("reporting", "REPORTING AGENT", 2, self._run_reporting))
+        workflow.add_node("report_generation", self._tracked_node("report_generation", "REPORT GENERATION", 4, self._run_reporting))
+        workflow.add_node("update_state", self._tracked_node("update_state", "EVIDENCE STATE UPDATE", 3, self._update_state))
+        workflow.add_node("reevaluate", self._tracked_node("reevaluate", "ORCHESTRATOR RE-EVALUATION", 4, self._reevaluate))
+        workflow.add_node("risk_findings", self._tracked_node("risk_findings", "RISK FINDINGS", 4, self._risk_findings))
+        workflow.add_node("human_review", self._tracked_node("human_review", "ANALYST AUTHORIZATION", 4, self._human_review))
+        workflow.add_node("final_synthesis", self._tracked_node("final_synthesis", "EVIDENCE SYNTHESIS", 4, self._final_synthesis))
+        workflow.add_node("audit_log", self._tracked_node("audit_log", "COMPLIANCE AUDIT", 4, self._audit_log))
 
         workflow.add_edge(START, "preprocess")
         workflow.add_edge("preprocess", "orchestrator")
@@ -89,6 +90,31 @@ class SecureOpsGraph:
         workflow.add_edge("final_synthesis", "audit_log")
         workflow.add_edge("audit_log", END)
         return workflow.compile()
+
+    def _emit_event(self, event: Dict[str, Any]) -> None:
+        if self._event_callback:
+            self._event_callback(event)
+
+    def _tracked_node(self, node_id: str, title: str, stage: int, handler: Callable[[SecureOpsState], Dict[str, Any]]):
+        """Emit UI lifecycle events at real LangGraph node boundaries."""
+        def run(state: SecureOpsState) -> Dict[str, Any]:
+            self._emit_event({"event": "node_started", "node": title, "flow_node": node_id, "stage": stage, "detail": f"{title} started"})
+            try:
+                result = handler(state)
+            except Exception as error:
+                self._emit_event({"event": "node_error", "node": title, "flow_node": node_id, "stage": stage, "detail": str(error)})
+                raise
+            for tool in result.get("tool_calls", []):
+                self._emit_event({"event": "tool_completed", "node": title, "flow_node": node_id, "stage": 3,
+                                  "tool": tool.get("tool", "telemetry_tool"), "detail": "Telemetry operation returned"})
+            if result.get("status") == "HITL_REQUIRED":
+                self._emit_event({"event": "node_waiting", "node": title, "flow_node": node_id, "stage": stage,
+                                  "detail": "Analyst authorization required"})
+            else:
+                self._emit_event({"event": "node_completed", "node": title, "flow_node": node_id, "stage": stage,
+                                  "detail": f"{title} completed"})
+            return result
+        return run
 
     @staticmethod
     def _trace(state: SecureOpsState, title: str, agent: str, **details: Any) -> List[Dict[str, Any]]:
@@ -283,29 +309,11 @@ class SecureOpsGraph:
             "hitl_status": {"approved": hitl_approved}, "audit_entries": [], "errors": [], "execution_trace": [],
         }
         run_config = LangSmithService.run_config(user_auth.get("role", "L1"), self.provider)
-        if on_event:
-            # LangGraph's value stream gives the interface the same node sequence
-            # that executes on the server, without coupling workflow code to Streamlit.
-            result = initial_state
-            emitted_trace_count = 0
-            for state in self.graph.stream(initial_state, config=run_config, stream_mode="values"):
-                result = state
-                trace = state.get("execution_trace", [])
-                for entry in trace[emitted_trace_count:]:
-                    title = entry.get("stage_title", "Workflow node")
-                    raw_stage = entry.get("stage_number", 1)
-                    visual_stage = 1 if raw_stage <= 2 else 2 if raw_stage == 3 else 3 if raw_stage == 4 else 4
-                    agent = entry.get("agent", "SENTRY Orchestrator")
-                    detail = entry.get("reason") or entry.get("decision") or title
-                    on_event({"event": "node_started", "node": agent, "stage": visual_stage, "detail": detail})
-                    for tool in entry.get("tool_calls", []):
-                        on_event({"event": "tool_completed", "node": agent, "stage": 3,
-                                  "tool": tool.get("tool", "telemetry_tool"), "detail": "Telemetry operation returned"})
-                    event_name = "node_waiting" if entry.get("status") == "WAITING_FOR_ANALYST" else "node_completed"
-                    on_event({"event": event_name, "node": agent, "stage": visual_stage, "detail": detail})
-                emitted_trace_count = len(trace)
-        else:
+        self._event_callback = on_event
+        try:
             result = self.graph.invoke(initial_state, config=run_config)
+        finally:
+            self._event_callback = None
         output = self._latest_output(result)
         log_stage("Workflow Completion", f"Workflow finished with status {result.get('status', 'SUCCESS')}")
         response = result.get("final_response") or output.get("response", "")
