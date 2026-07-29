@@ -149,7 +149,7 @@ def run_main_ui():
     if not processing and st.session_state.get("preset_query"):
         user_input = st.session_state.pop("preset_query")
     else:
-        user_input = st.chat_input("Ask SENTRY AI a security query, user email, host IP, or command...", disabled=processing)
+        user_input = st.chat_input("Investigate an alert, user, host, IP address, or incident…", disabled=processing)
 
     # Process pending HITL approval execution
     if st.session_state.get("hitl_approved"):
@@ -164,6 +164,8 @@ def run_main_ui():
             live_events.append(event)
             render_execution_console(execution_panel, live_events)
             render_bot(executing=True, slot=guardian_panel)
+            if event.get("event") in {"node_started", "tool_completed"}:
+                time.sleep(0.12)
 
         with st.status("🧠 **SENTRY AI Thinking...** Executing authorized security action...", expanded=True) as status:
             status.write("⚙️ Initializing authorized incident ticket parameters...")
@@ -217,6 +219,8 @@ def run_main_ui():
             live_events.append(event)
             render_execution_console(execution_panel, live_events)
             render_bot(executing=True, slot=guardian_panel)
+            if event.get("event") in {"node_started", "tool_completed"}:
+                time.sleep(0.12)
 
         # AI Thinking & Reasoning Status Expander
         with st.status("🧠 **SENTRY AI Thinking & Reasoning...**", expanded=True) as status:

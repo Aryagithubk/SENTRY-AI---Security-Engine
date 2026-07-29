@@ -31,11 +31,11 @@ def render_sidebar():
         st.markdown('<div class="side-section-label">WORKSPACE</div>', unsafe_allow_html=True)
         nav_choice = st.radio(
             "Workspace navigation",
-            options=["Copilot", "Investigation", "Operations Dashboard", "Audit Trail"],
+            options=["SENTRY Console", "Investigation", "Operations Dashboard", "Audit Trail"],
             label_visibility="collapsed",
         )
         st.session_state["nav_choice"] = {
-            "Copilot": "💬 Copilot Chat",
+            "SENTRY Console": "💬 Copilot Chat",
             "Investigation": "🕵️ Investigation Workspace",
             "Operations Dashboard": "📊 Role Dashboard",
             "Audit Trail": "📜 Compliance Audit Logs",
